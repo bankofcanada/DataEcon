@@ -28,4 +28,3 @@ jobs:
       run: make clean
     - name: build
       run: make lib
-    -
