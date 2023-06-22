@@ -1,3 +1,6 @@
+
+[![build](https://github.com/bankofcanada/DataEcon/actions/workflows/build.yml/badge.svg)](https://github.com/bankofcanada/DataEcon/actions/workflows/build.yml)
+
 # DataEcon
 
 This repository contains the C code for a shared library that is used under the
