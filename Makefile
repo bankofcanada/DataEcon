@@ -147,6 +147,6 @@ test :: $(TEST) | $(COVDIR)
 
 .PHONY : coverage
 coverage :: test | $(COVDIR)
-	gcov -o $(COVDIR) $(LIBDE_SRC_C) >& /dev/null
-	lcov -c --directory $(COVDIR) -o lcov.info >& /dev/null
+	gcov -o $(COVDIR) $(LIBDE_SRC_C) 
+	lcov -c --directory $(COVDIR) -o lcov.info 
 
