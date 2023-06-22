@@ -17,8 +17,15 @@ jobs:
       run: make test
     - name: coverage
       run: make coverage
+    - name: upload_codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./lcov.info
+        fail_ci_if_error: false # optional (default = false)
+        verbose: true # optional (default = false)
     - name: cleanup
       run: make clean
     - name: build
       run: make lib
-
+    -
