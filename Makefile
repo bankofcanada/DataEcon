@@ -143,8 +143,10 @@ clean_cov ::
 
 .PHONY : test
 test :: $(TEST) | $(COVDIR)
-	@lcov -z --directory $(COVDIR) -o lcov.info >& /dev/null
-	@bin/test
-	@gcov -o $(COVDIR) $(LIBDE_SRC_C) >& /dev/null
-	@lcov -c --directory $(COVDIR) -o lcov.info >& /dev/null
+	bin/test
+
+.PHONY : coverage
+coverage :: test | $(COVDIR)
+	gcov -o $(COVDIR) $(LIBDE_SRC_C) >& /dev/null
+	lcov -c --directory $(COVDIR) -o lcov.info >& /dev/null
 
