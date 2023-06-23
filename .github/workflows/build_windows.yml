@@ -16,9 +16,10 @@ jobs:
       with:
         platform: x64
     - name: print_gcc_version
-      run: gcc --version
-    - name: print_environment
-      run: set
+      run: |
+        echo "::notice Hello World"
+        gcc --version
+        echo $target
     - name: test
       run: make test
     - name: start_over
