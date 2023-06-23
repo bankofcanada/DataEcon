@@ -1,0 +1,20 @@
+name: build_windows
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: test
+      run: make test
+    - name: start_over
+      run: make purge
+    - name: build_all
+      run: make all
+
