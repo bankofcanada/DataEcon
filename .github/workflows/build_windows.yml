@@ -17,6 +17,8 @@ jobs:
         platform: x64
     - name: print_gcc_version
       run: gcc --version
+    - name: print_environment
+      run: set
     - name: test
       run: make test
     - name: start_over
