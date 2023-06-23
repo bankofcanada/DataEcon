@@ -1,5 +1,7 @@
 
-[![build](https://github.com/bankofcanada/DataEcon/actions/workflows/build.yml/badge.svg)](https://github.com/bankofcanada/DataEcon/actions/workflows/build.yml)
+[![build_linux](https://github.com/bankofcanada/DataEcon/actions/workflows/build_linux.yml/badge.svg)](https://github.com/bankofcanada/DataEcon/actions/workflows/build_linux.yml)
+[![build_windows](https://github.com/bankofcanada/DataEcon/actions/workflows/build_windows.yml/badge.svg)](https://github.com/bankofcanada/DataEcon/actions/workflows/build_windows.yml)
+[![build_macos](https://github.com/bankofcanada/DataEcon/actions/workflows/build_macos.yml/badge.svg)](https://github.com/bankofcanada/DataEcon/actions/workflows/build_macos.yml)
 
 # DataEcon
 
