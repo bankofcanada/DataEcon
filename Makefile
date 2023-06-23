@@ -11,8 +11,8 @@ VPATH = src src/libdaec src/sqlite3
 # vpath %.c src/libdaec src/sqlite3
 # vpath %.o src/libdaec src/sqlite3
 
-# CFLAGS = -std=c99 -O3 -Wall -Wpedantic -fPIC
-CFLAGS = -std=c99 -O0 -g -Wall -Wpedantic -fPIC
+CFLAGS = -std=c99 -O3 -Wall -Wpedantic -fPIC
+# CFLAGS = -std=c99 -O0 -g -Wall -Wpedantic -fPIC
 # add include directories from VPATH
 CFLAGS += $(patsubst %,-I%,$(VPATH))
 
@@ -56,7 +56,12 @@ DESH_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
 TEST = bin/test
 TEST_SRC_C = src/test.c
 TEST_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(TEST_SRC_C)))
-TEST_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDECOV))) -L bin -ldaeccov
+TEST_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
+
+TESTCOV = bin/testcov
+TESTCOV_SRC_C = src/test.c
+TESTCOV_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(TEST_SRC_C)))
+TESTCOV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDECOV))) -L bin -ldaeccov
 
 # default goal - build everything
 all :: lib sqlite3
@@ -112,19 +117,23 @@ $(DESH): $(DESH_SRC_O) | $(LIBDE) bin
 	$(LINK.c) $^ -o $@ $(DESH_LDFLAGS)
 
 # link test executable with library with coverage
-$(TEST): $(TEST_SRC_O) | $(LIBDECOV) bin
-	$(LINK.c) -lgcov --coverage $^ -o $@ $(TEST_LDFLAGS)
+$(TEST): $(TEST_SRC_O) | $(LIBDE) bin
+	$(LINK.c) $^ -o $@ $(TEST_LDFLAGS)
+
+# link test executable with library with coverage
+$(TESTCOV): $(TEST_SRC_O) | $(LIBDECOV) bin
+	$(LINK.c) -lgcov --coverage $^ -o $@ $(TESTCOV_LDFLAGS)
 
 # delete most generated files
 .PHONY : clean
 clean :: clean_cov
-	@rm -f $(LIBDE) $(LIBDE_SRC_O) $(DESH) $(DESH_SRC_O)
+	@rm -f $(LIBDE) $(LIBDE_SRC_O) $(TEST) $(TEST_SRC_O) $(DESH) $(DESH_SRC_O)
 
 # delete all generated files
 .PHONY : purge
 purge :: clean
 	@rm -f $(SQLITE3) $(SQLITE3_SRC_O)
-	@rm -f -r $(CACHEDIR)
+	@rm -f -r $(CACHEDIR) bin
 
 .PHONY : lib
 lib :: $(LIBDE)
@@ -139,14 +148,18 @@ sqlite3 :: $(SQLITE3)
 .PHONY : clean_cov
 clean_cov ::
 	@rm -rf $(COVDIR)
-	@rm -f $(LIBDECOV) $(TEST) $(TEST_SRC_O) $(LIBDECOV_SRC_GCOV) lcov.info test.daec
+	@rm -f $(LIBDECOV) $(TESTCOV) $(LIBDECOV_SRC_GCOV) lcov.info test.daec
 
 .PHONY : test
-test :: $(TEST) | $(COVDIR)
+test :: $(TEST) 
 	bin/test
 
+.PHONY : testcov
+testcov :: $(TESTCOV) | $(COVDIR)
+	bin/testcov
+
 .PHONY : coverage
-coverage :: test | $(COVDIR)
+coverage :: testcov | $(COVDIR)
 	gcov -o $(COVDIR) $(LIBDE_SRC_C) 
 	lcov -c --directory $(COVDIR) -o lcov.info 
 
