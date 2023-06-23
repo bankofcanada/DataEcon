@@ -11,8 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: install_lcov
+        run: sudo apt-get install lcov
       - name: test_with_coverage
         run: |
+          echo "Run test with coverage"
           make testcov
           make coverage
       - name: upload_codecov
@@ -24,5 +27,6 @@ jobs:
           verbose: true # optional (default = false)
       - name: build
         run: |
+          echo "Build all"
           make purge
           make all

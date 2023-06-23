@@ -17,9 +17,11 @@ jobs:
           platform: x64
       - name: test
         run: |
+          echo "Run tests"
           gcc --version
           make test
       - name: build
         run: |
+          echo "Build all"
           make purge
           make all
