@@ -15,15 +15,12 @@ jobs:
       uses: egor-tensin/setup-mingw@v2
       with:
         platform: x64
-    - name: print_gcc_version
-      run: |
-        echo "::notice Hello World"
-        gcc --version
-        echo $target
     - name: test
-      run: make test
-    - name: start_over
-      run: make purge
-    - name: build_all
-      run: make all
+      run: |
+        gcc --version
+        make test
+    - name: build
+      run: |
+        make purge
+        make all
 

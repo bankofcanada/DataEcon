@@ -18,14 +18,27 @@ CFLAGS += $(patsubst %,-I%,$(VPATH))
 
 CFLAGS_COV = -fprofile-arcs -fprofile-abs-path -ftest-coverage 
 
-ifeq ($(findstring mingw32,$(target)),)
-    MY_LDFLAGS = -lpthread -ldl -lm
-	LIBDE = bin/libdaec.so
-	LIBDECOV = bin/libdaeccov.so
+ifeq ($(target),)
+# $(target) not specified => use OS we're running in
+	ifeq ($(OS),Windows_NT)
+		LIBDE = bin/daec.dll
+		LIBDECOV = bin/daecCOV.dll
+	else
+		MY_LDFLAGS = -lpthread -ldl -lm
+		LIBDE = bin/libdaec.so
+		LIBDECOV = bin/libdaeccov.so
+	endif
 else
-	LIBDE = bin/daec.dll
-	LIBDECOV = bin/daecCOV.dll
-endif
+# We have $(target) - use it
+	ifeq ($(findstring mingw32,$(target)),)
+		MY_LDFLAGS = -lpthread -ldl -lm
+		LIBDE = bin/libdaec.so
+		LIBDECOV = bin/libdaeccov.so
+	else
+		LIBDE = bin/daec.dll
+		LIBDECOV = bin/daecCOV.dll
+	endif
+endif 
 
 # for the sqlite3 shell executable
 SQLITE3 = bin/sqlite3
