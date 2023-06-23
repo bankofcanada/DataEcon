@@ -1,0 +1,28 @@
+name: build_linux
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: test_with_coverage
+        run: |
+          make testcov
+          make coverage
+      - name: upload_codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./lcov.info
+          fail_ci_if_error: false # optional (default = false)
+          verbose: true # optional (default = false)
+      - name: build
+        run: |
+          make purge
+          make all

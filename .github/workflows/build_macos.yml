@@ -1,4 +1,4 @@
-name: build_windows
+name: build_macos
 
 on:
   push:
@@ -7,14 +7,10 @@ on:
     branches: ["main"]
 
 jobs:
-  build_windows:
-    runs-on: windows-latest
+  build_macos:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-      - name: setup_mingw
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: x64
       - name: test
         run: |
           gcc --version
