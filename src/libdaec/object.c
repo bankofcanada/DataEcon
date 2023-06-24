@@ -133,5 +133,3 @@ int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
     }
     return DE_SUCCESS;
 }
-
-// /*****************************************************************************************/
