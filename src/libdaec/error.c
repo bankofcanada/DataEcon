@@ -30,7 +30,7 @@ static error_t last_error = {
     .source_trace = "\0",
 };
 
-int de_clear_error()
+int de_clear_error(void)
 {
     /* we don't free memory for s3_msg: it is managed by sqlite3 https://www.sqlite.org/c3ref/errcode.html */
     if (last_error.arg)

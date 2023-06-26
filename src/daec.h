@@ -19,7 +19,7 @@ extern "C"
     int de_error_source(char *msg, size_t len);
 
     /* reset error tracking */
-    int de_clear_error();
+    int de_clear_error(void);
 
     /* positive error codes come from sqlite: https://sqlite.org/rescode.html */
     enum

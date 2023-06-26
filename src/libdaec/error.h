@@ -16,7 +16,7 @@ int de_error(char *restrict msg, size_t len);
 int de_error_source(char *restrict msg, size_t len);
 
 /* reset error tracking */
-int de_clear_error();
+int de_clear_error(void);
 
 /* positive error codes come from sqlite: https://sqlite.org/rescode.html */
 enum
@@ -64,8 +64,6 @@ int set_db_error(sqlite3 *db, const char *func, const char *file, int line);
 /* error from SQLite result code */
 #define rc_error(rc) set_rc_error((rc), __func__, __FILE__, __LINE__)
 int set_rc_error(int rc, const char *func, const char *file, int line);
-
-int clear_error();
 
 #define trace_error() set_trace_error(__func__, __FILE__, __LINE__)
 int set_trace_error(const char *func, const char *file, int line);
