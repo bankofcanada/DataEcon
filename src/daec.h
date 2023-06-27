@@ -176,7 +176,7 @@ extern "C"
                               int64_t *nattr, const char **names, const char **values);
 
     /* get the full path of an object from its id */
-    int de_get_object_info(de_file, obj_id_t id,
+    int de_get_object_info(de_file de, obj_id_t id,
                            const char **fullpath, int64_t *depth, int64_t *created);
 
     /* get the id of an object from its fullpath */

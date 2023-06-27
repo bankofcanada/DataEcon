@@ -20,8 +20,14 @@ int de_new_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
         return error(DE_NULL);
     if (!check_tseries_type(type))
         return error(DE_BAD_TYPE);
-    if (!check_scalar_type(eltype))
+    while (true)
+    {
+        if (check_scalar_type(eltype))
+            break;
+        if (type == type_range && eltype == type_none)
+            break;
         return error(DE_BAD_TYPE);
+    }
     obj_id_t _id;
     TRACE_RUN(_new_object(de, pid, class_tseries, type, name, &_id));
     if (id != NULL)
@@ -97,7 +103,7 @@ int de_pack_strings(const char **strvec, int64_t length, char *buffer, int64_t *
     return DE_SUCCESS;
 }
 
-/* "unpack" a buffer of strings into a vector of '\0'- terminated strings 
+/* "unpack" a buffer of strings into a vector of '\0'- terminated strings
    NOTES:
     * `strvec` must point to a vector of `length` pointers to char. The pointers
       will be populated with the addresses of the beginnings of the individual
@@ -121,7 +127,7 @@ int de_unpack_strings(const char *buffer, int64_t bufsize, const char **strvec, 
 
             /* didn't find enough strings in buffer -- zero the remaining
             pointers in strvec and return error */
-            while(i < length)
+            while (i < length)
                 strvec[i++] = NULL;
             return error(DE_ARG);
         }

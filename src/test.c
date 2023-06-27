@@ -404,6 +404,20 @@ int main(void)
         obj_id_t _id;
         tseries_t ts;
 
+        /* plain range */
+        CHECK_SUCCESS(de_axis_plain(de, 11, &ax));
+        CHECK(de_new_tseries(de, id_tseries, "rng_plain", type_integer, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_new_tseries(de, id_tseries, "rng_plain", type_tseries, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK_SUCCESS(de_new_tseries(de, id_tseries, "rng_plain", type_range, type_none, ax, 0, NULL, &_id));
+        CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
+        CHECK_TSERIES(ts, _id, type_range, type_none, ax, NULL);
+
+        /* dates range */
+        CHECK_SUCCESS(de_axis_range(de, 6, freq_halfyearly, 4041, &ax));
+        CHECK_SUCCESS(de_new_tseries(de, id_tseries, "rng_dates", type_range, type_none, ax, 0, NULL, &_id));
+        CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
+        CHECK_TSERIES(ts, _id, type_range, type_none, ax, NULL);
+
         double dvals[5] = {0.1, 0.2, 0.3, 0.4, 0.5};
         CHECK_SUCCESS(de_axis_plain(de, sizeof dvals / sizeof dvals[0], &ax));
         CHECK_SUCCESS(de_new_tseries(de, id_tseries, "ts_double", type_tseries, type_float, ax, sizeof dvals, dvals, &_id));
