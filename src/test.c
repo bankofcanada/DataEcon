@@ -494,6 +494,7 @@ int main(void)
         // const char *path;
         while (DE_SUCCESS == (rc = de_next_object(search, &object)))
         {
+            FAIL_IF(object.id == object.pid, "search yields parent");
             FAIL_IF(object.pid != 0, "not in the catalog");
             // ++count;
             // CHECK_SUCCESS(de_get_object_info(de, object.id, &path, NULL, NULL));

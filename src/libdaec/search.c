@@ -33,7 +33,7 @@ int _prepare_search(de_file de, int64_t pid, const char *wc, type_t type, class_
     };
 
     char buf[_BUF_SIZE];
-    char *p = _push_string(buf, "SELECT `id`, `pid`, `class`, `type`, `name` FROM `objects` WHERE TRUE");
+    char *p = _push_string(buf, "SELECT `id`, `pid`, `class`, `type`, `name` FROM `objects` WHERE `id` > 0");
 
     assert(((long int)(p - buf) < _BUF_SIZE));
 
