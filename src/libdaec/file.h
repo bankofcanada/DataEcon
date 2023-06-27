@@ -26,8 +26,8 @@ typedef enum stmt_name
 {
     stmt_new_object = 0,
     stmt_new_object_info,
-    stmt_new_scalar,
-    stmt_new_tseries,
+    stmt_store_scalar,
+    stmt_store_tseries,
     stmt_new_mvtseries,
     stmt_new_axis,
     stmt_find_object,

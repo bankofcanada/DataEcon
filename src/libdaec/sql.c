@@ -229,9 +229,9 @@ int sql_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
     }
 }
 
-int sql_new_scalar_value(de_file de, obj_id_t id, frequency_t frequency, int64_t nbytes, const void *value)
+int sql_store_scalar_value(de_file de, obj_id_t id, frequency_t frequency, int64_t nbytes, const void *value)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_new_scalar);
+    sqlite3_stmt *stmt = _get_statement(de, stmt_store_scalar);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -406,9 +406,9 @@ int sql_new_axis(de_file de, axis_t *axis)
 /**************************************************************/
 /* tseries */
 
-int sql_new_tseries_value(de_file de, obj_id_t id, type_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value)
+int sql_store_tseries_value(de_file de, obj_id_t id, type_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_new_tseries);
+    sqlite3_stmt *stmt = _get_statement(de, stmt_store_tseries);
     if (stmt == NULL)
         return trace_error();
     int rc;

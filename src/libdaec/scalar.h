@@ -19,7 +19,7 @@ typedef struct
 } scalar_t;
 
 /* create a new scalar object in a given parent catalog */
-int de_new_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
+int de_store_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
                   frequency_t freq, int64_t nbytes, const void *value,
                   obj_id_t *id);
 

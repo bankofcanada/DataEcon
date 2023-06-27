@@ -19,7 +19,7 @@ typedef struct
 typedef tseries_t vector_t;
 
 /* create a new 1d-array object in a given parent catalog */
-int de_new_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
+int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
                    type_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value,
                    obj_id_t *id);
 

@@ -17,7 +17,7 @@ bool check_scalar_type(type_t type)
 }
 
 /* create a new scalar object in a given parent catalog */
-int de_new_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
+int de_store_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
                   frequency_t freq, int64_t nbytes, const void *value,
                   obj_id_t *id)
 {
@@ -29,7 +29,7 @@ int de_new_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
     TRACE_RUN(_new_object(de, pid, class_scalar, type, name, &_id));
     if (id != NULL)
         *id = _id;
-    TRACE_RUN(sql_new_scalar_value(de, _id, freq, nbytes, value));
+    TRACE_RUN(sql_store_scalar_value(de, _id, freq, nbytes, value));
     return DE_SUCCESS;
 }
 

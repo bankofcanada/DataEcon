@@ -111,9 +111,9 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
         return "INSERT INTO `objects_info` (`id`,`created`,`depth`,`fullpath`) "
                "SELECT o.`id`, unixepoch('now'), po.`depth` + 1, format('%s/%s', po.`fullpath`, o.`name`) "
                "FROM `objects` as o LEFT JOIN `objects_info` as po on o.`pid` = po.`id` WHERE o.`id` = ?;";
-    case stmt_new_scalar:
+    case stmt_store_scalar:
         return "INSERT INTO `scalars` (`id`, `frequency`, `value`) VALUES (?,?,?);";
-    case stmt_new_tseries:
+    case stmt_store_tseries:
         return "INSERT INTO `tseries` (`id`, `eltype`, `axis_id`, `value`) VALUES (?,?,?,?);";
     case stmt_new_mvtseries:
         return "INSERT INTO `mvtseries` (`id`, `eltype`, `axis1_id`, `axis2_id`, `value`) VALUES (?,?,?,?,?);";

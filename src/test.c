@@ -224,15 +224,15 @@ int main(void)
         uint32_t four = 4;
         char five[] = "five";
         int64_t q2020Q1 = 2020 * 4 + 1;
-        CHECK(de_new_scalar(NULL, id_scalars, "one", type_float, freq_none, sizeof one, &one, NULL), DE_NULL);
-        CHECK(de_new_scalar(de, id_scalars, NULL, type_float, freq_none, sizeof one, &one, NULL), DE_NULL);
+        CHECK(de_store_scalar(NULL, id_scalars, "one", type_float, freq_none, sizeof one, &one, NULL), DE_NULL);
+        CHECK(de_store_scalar(de, id_scalars, NULL, type_float, freq_none, sizeof one, &one, NULL), DE_NULL);
 
-        CHECK_SUCCESS(de_new_scalar(de, id_scalars, "one", type_float, freq_none, sizeof one, &one, &id));
-        CHECK_SUCCESS(de_new_scalar(de, id_scalars, "two", type_float, freq_none, sizeof two, &two, NULL));
-        CHECK_SUCCESS(de_new_scalar(de, id_scalars, "three", type_signed, freq_none, sizeof three, &three, NULL));
-        CHECK_SUCCESS(de_new_scalar(de, id_scalars, "four", type_unsigned, freq_none, sizeof four, &four, NULL));
-        CHECK_SUCCESS(de_new_scalar(de, id_scalars, "five", type_string, freq_none, sizeof five + 1, five, NULL));
-        CHECK_SUCCESS(de_new_scalar(de, id_scalars, "qdate", type_date, freq_quarterly, sizeof q2020Q1, &q2020Q1, NULL));
+        CHECK_SUCCESS(de_store_scalar(de, id_scalars, "one", type_float, freq_none, sizeof one, &one, &id));
+        CHECK_SUCCESS(de_store_scalar(de, id_scalars, "two", type_float, freq_none, sizeof two, &two, NULL));
+        CHECK_SUCCESS(de_store_scalar(de, id_scalars, "three", type_signed, freq_none, sizeof three, &three, NULL));
+        CHECK_SUCCESS(de_store_scalar(de, id_scalars, "four", type_unsigned, freq_none, sizeof four, &four, NULL));
+        CHECK_SUCCESS(de_store_scalar(de, id_scalars, "five", type_string, freq_none, sizeof five + 1, five, NULL));
+        CHECK_SUCCESS(de_store_scalar(de, id_scalars, "qdate", type_date, freq_quarterly, sizeof q2020Q1, &q2020Q1, NULL));
 
         scalar_t scalar;
         CHECK_SUCCESS(de_find_object(de, id_scalars, "one", &id));
@@ -268,7 +268,7 @@ int main(void)
     {
         obj_id_t _id;
         int val = 77;
-        CHECK_SUCCESS(de_new_scalar(de, 0, "attr_test", type_signed, freq_none, sizeof val, &val, &_id));
+        CHECK_SUCCESS(de_store_scalar(de, 0, "attr_test", type_signed, freq_none, sizeof val, &val, &_id));
         CHECK(de_set_attribute(de, _id, NULL, NULL), DE_NULL);
         CHECK(de_set_attribute(NULL, _id, "greeting", NULL), DE_NULL);
         CHECK_SUCCESS(de_set_attribute(de, _id, "greeting", NULL));
@@ -406,27 +406,27 @@ int main(void)
 
         /* plain range */
         CHECK_SUCCESS(de_axis_plain(de, 11, &ax));
-        CHECK(de_new_tseries(de, id_tseries, "rng_plain", type_integer, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
-        CHECK(de_new_tseries(de, id_tseries, "rng_plain", type_tseries, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
-        CHECK_SUCCESS(de_new_tseries(de, id_tseries, "rng_plain", type_range, type_none, ax, 0, NULL, &_id));
+        CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_integer, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_tseries, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK_SUCCESS(de_store_tseries(de, id_tseries, "rng_plain", type_range, type_none, ax, 0, NULL, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
         CHECK_TSERIES(ts, _id, type_range, type_none, ax, NULL);
 
         /* dates range */
         CHECK_SUCCESS(de_axis_range(de, 6, freq_halfyearly, 4041, &ax));
-        CHECK_SUCCESS(de_new_tseries(de, id_tseries, "rng_dates", type_range, type_none, ax, 0, NULL, &_id));
+        CHECK_SUCCESS(de_store_tseries(de, id_tseries, "rng_dates", type_range, type_none, ax, 0, NULL, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
         CHECK_TSERIES(ts, _id, type_range, type_none, ax, NULL);
 
         double dvals[5] = {0.1, 0.2, 0.3, 0.4, 0.5};
         CHECK_SUCCESS(de_axis_plain(de, sizeof dvals / sizeof dvals[0], &ax));
-        CHECK_SUCCESS(de_new_tseries(de, id_tseries, "ts_double", type_tseries, type_float, ax, sizeof dvals, dvals, &_id));
+        CHECK_SUCCESS(de_store_tseries(de, id_tseries, "ts_double", type_tseries, type_float, ax, sizeof dvals, dvals, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
         CHECK_TSERIES(ts, _id, type_tseries, type_float, ax, dvals);
 
-        CHECK(de_new_tseries(de, id_tseries, "ts_double", type_tseries, type_float, ax, sizeof dvals, dvals, &_id), DE_EXISTS);
-        CHECK(de_new_tseries(NULL, id_tseries, "ts_double", type_tseries, type_float, ax, sizeof dvals, dvals, &_id), DE_NULL);
-        CHECK(de_new_tseries(de, id_tseries, NULL, type_tseries, type_float, ax, sizeof dvals, dvals, &_id), DE_NULL);
+        CHECK(de_store_tseries(de, id_tseries, "ts_double", type_tseries, type_float, ax, sizeof dvals, dvals, &_id), DE_EXISTS);
+        CHECK(de_store_tseries(NULL, id_tseries, "ts_double", type_tseries, type_float, ax, sizeof dvals, dvals, &_id), DE_NULL);
+        CHECK(de_store_tseries(de, id_tseries, NULL, type_tseries, type_float, ax, sizeof dvals, dvals, &_id), DE_NULL);
         CHECK(de_load_tseries(NULL, _id, &ts), DE_NULL);
         CHECK(de_load_tseries(de, _id, NULL), DE_NULL);
         CHECK(de_load_tseries(de, id_tseries, &ts), DE_BAD_CLASS);
@@ -434,7 +434,7 @@ int main(void)
         float fvals[5] = {0.1, 0.2, 0.3, 0.4, 0.5};
         CHECK_SUCCESS(de_axis_plain(de, sizeof fvals / sizeof fvals[0], &ax));
         FAIL_IF(ax != ts.axis.id, "Duplicate axis.");
-        CHECK_SUCCESS(de_new_tseries(de, id_tseries, "ts_float", type_tseries, type_float, ax, sizeof fvals, fvals, &_id));
+        CHECK_SUCCESS(de_store_tseries(de, id_tseries, "ts_float", type_tseries, type_float, ax, sizeof fvals, fvals, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
         CHECK_TSERIES(ts, _id, type_tseries, type_float, ax, fvals);
 
@@ -454,7 +454,7 @@ int main(void)
         bufsize = sizeof buffer;
         CHECK_SUCCESS(de_pack_strings(svals, 5, buffer, &bufsize));
         FAIL_IF(bufsize == sizeof buffer, "Bufsize didn't update");
-        CHECK_SUCCESS(de_new_tseries(de, id_tseries, "ts_string", type_tseries, type_string, ax, bufsize, buffer, &_id));
+        CHECK_SUCCESS(de_store_tseries(de, id_tseries, "ts_string", type_tseries, type_string, ax, bufsize, buffer, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
         FAIL_IF(ts.nbytes != bufsize, "nbytes doesn't match.");
         CHECK_TSERIES(ts, _id, type_tseries, type_string, ax, buffer);
@@ -504,14 +504,14 @@ int main(void)
 
         int64_t val = 0;
         // obj_id_t id;
-        CHECK_SUCCESS(de_new_scalar(de, 0, "scal1", type_integer, freq_none, sizeof val, &val, NULL));
-        CHECK_SUCCESS(de_new_scalar(de, 0, "scal2", type_float, freq_none, sizeof val, &val, NULL));
-        CHECK_SUCCESS(de_new_scalar(de, 0, "scal3", type_string, freq_none, sizeof val, &val, NULL));
+        CHECK_SUCCESS(de_store_scalar(de, 0, "scal1", type_integer, freq_none, sizeof val, &val, NULL));
+        CHECK_SUCCESS(de_store_scalar(de, 0, "scal2", type_float, freq_none, sizeof val, &val, NULL));
+        CHECK_SUCCESS(de_store_scalar(de, 0, "scal3", type_string, freq_none, sizeof val, &val, NULL));
         axis_id_t aid;
         CHECK_SUCCESS(de_axis_plain(de, 1, &aid));
-        CHECK_SUCCESS(de_new_tseries(de, 0, "ts1", type_vector, type_integer, aid, sizeof val, &val, NULL));
-        CHECK_SUCCESS(de_new_tseries(de, 0, "ts2", type_vector, type_float, aid, sizeof val, &val, NULL));
-        CHECK_SUCCESS(de_new_tseries(de, 0, "ts3", type_vector, type_string, aid, sizeof val, &val, NULL));
+        CHECK_SUCCESS(de_store_tseries(de, 0, "ts1", type_vector, type_integer, aid, sizeof val, &val, NULL));
+        CHECK_SUCCESS(de_store_tseries(de, 0, "ts2", type_vector, type_float, aid, sizeof val, &val, NULL));
+        CHECK_SUCCESS(de_store_tseries(de, 0, "ts3", type_vector, type_string, aid, sizeof val, &val, NULL));
         for (class_t class = class_catalog; class <= class_tseries; ++class)
         {
             int count = 0;

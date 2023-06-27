@@ -12,7 +12,7 @@ bool check_tseries_type(type_t type)
 }
 
 /* create a new 1d-array object in a given parent catalog */
-int de_new_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
+int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
                    type_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value,
                    obj_id_t *id)
 {
@@ -32,7 +32,7 @@ int de_new_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
     TRACE_RUN(_new_object(de, pid, class_tseries, type, name, &_id));
     if (id != NULL)
         *id = _id;
-    TRACE_RUN(sql_new_tseries_value(de, _id, eltype, axis_id, nbytes, value));
+    TRACE_RUN(sql_store_tseries_value(de, _id, eltype, axis_id, nbytes, value));
     return DE_SUCCESS;
 }
 
