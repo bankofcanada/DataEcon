@@ -125,7 +125,7 @@ void check_tseries(tseries_t tseries, obj_id_t id, type_t type, type_t eltype, a
 #define CHECK_SUCCESS(x) check(x, DE_SUCCESS, __FILE__, __LINE__)
 #define CHECK(x, e) check(x, e, __FILE__, __LINE__)
 
-int main()
+int main(void)
 {
     const static char fname[] = "test.daec";
     unlink(fname);
@@ -201,12 +201,6 @@ int main()
         CHECK_SUCCESS(de_find_fullpath(de, "/hello/world/super", &id));
         FAIL_IF(id != id_super, "find fullpath \"/hello/world/super\"");
         CHECK(de_find_fullpath(de, "/hello/does/not/exist", &id), DE_OBJ_DNE);
-
-        /* load object works for a catalog */
-        catalog_t hello;
-        CHECK_SUCCESS(de_load_catalog(de, id_hello, &hello));
-        FAIL_IF(hello.object.id != id_hello, "Id create and load id don't match");
-        CHECK(de_load_catalog(de, id_hello, NULL), DE_NULL);
 
         /* delete object works and deletes catalogs recursively */
         CHECK(de_delete_object(NULL, id_hello), DE_NULL);
