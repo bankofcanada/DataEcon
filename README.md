@@ -4,11 +4,13 @@
 [![build_macos](https://github.com/bankofcanada/DataEcon/actions/workflows/build_macos.yml/badge.svg)](https://github.com/bankofcanada/DataEcon/actions/workflows/build_macos.yml)
 [![codecov](https://codecov.io/gh/bankofcanada/DataEcon/branch/main/graph/badge.svg?token=5BE01J5G6W)](https://codecov.io/gh/bankofcanada/DataEcon)
 
-# DataEcon
+# `DataEcon`
 
 This repository contains the C code for a shared library that is used under the
 hood of [TimeSeriesEcon.jl](https://github.com/bankofcanada/TimeSeriesEcon.jl)
 for reading and writing time series data in Julia.
+
+## Using `DataEcon` in Julia
 
 From Julia simply install the
 [TimeSeriesEcon](https://github.com/bankofcanada/TimeSeriesEcon.jl) package.
@@ -19,9 +21,27 @@ From Julia simply install the
 > ] add TimeSeriesEcon#dataecon 
 > ```
 
+In `TimeSeriesEcon` you will find the sub-module `DataEcon`.
+
+Example:
+```julia
+using TimeSeriesEcon
+DE = TimeSeriesEcon.DataEcon
+
+message = DE.opendaec("example.daec") do de
+    DE.write_data(de, :message, "Hello World")
+    DE.read_data(de, :message)
+end
+
+show(message)
+```
+
+## Using `DataEcon` in C/C++
+
 If not using Julia, the rest of this file should help you to get started. 
 
-## Getting started
+
+### Getting started
 
 Use `make` to build the library and run the tests.
 
@@ -39,7 +59,7 @@ will build a test application `bin/test` and run it.
 
 Alternatively, you can simply download precompiled binaries for your machine from [DataEcon_jll](https://github.com/JuliaBinaryWrappers/DataEcon_jll.jl/releases).
 
-## Using the library
+### Example
 
 To build your own executable, compile it with `#include "src/daec.h"`, and link it against the `bin/libdaec.so` library.  
 
