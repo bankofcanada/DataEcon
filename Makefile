@@ -3,6 +3,7 @@
 # redirect all generated files to directory .cache
 CACHEDIR = .cache
 COVDIR = $(CACHEDIR)/cov
+PROFDIR = $(CACHEDIR)/prof
 
 # search path for targets and prereqs
 VPATH = src src/libdaec src/sqlite3
@@ -17,16 +18,19 @@ CFLAGS = -std=c99 -O3 -Wall -Wpedantic -fPIC
 CFLAGS += $(patsubst %,-I%,$(VPATH))
 
 CFLAGS_COV = -fprofile-arcs -fprofile-abs-path -ftest-coverage 
+CFLAGS_PROF = -pg -O0 -g
 
 ifeq ($(target),)
 # $(target) not specified => use OS we're running in
 	ifeq ($(OS),Windows_NT)
 		LIBDE = bin/daec.dll
-		LIBDECOV = bin/daecCOV.dll
+		LIBDECOV = bin/daeccov.dll
+		LIBDEPROF = bin/daecprof.dll
 	else
 		MY_LDFLAGS = -lpthread -ldl -lm
 		LIBDE = bin/libdaec.so
 		LIBDECOV = bin/libdaeccov.so
+		LIBDEPROF = bin/libdaecprof.so
 	endif
 else
 # We have $(target) - use it
@@ -34,9 +38,11 @@ else
 		MY_LDFLAGS = -lpthread -ldl -lm
 		LIBDE = bin/libdaec.so
 		LIBDECOV = bin/libdaeccov.so
+		LIBDEPROF = bin/libdaecprof.so
 	else
 		LIBDE = bin/daec.dll
-		LIBDECOV = bin/daecCOV.dll
+		LIBDECOV = bin/daeccov.dll
+		LIBDEPROF = bin/daecprof.dll
 	endif
 endif 
 
@@ -54,10 +60,15 @@ LIBDE_SRC_C = $(wildcard src/libdaec/*.c)
 LIBDE_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(LIBDE_SRC_C)))
 LIBDE_LDFLAGS = $(MY_LDFLAGS)
 
+LIBDEPROF_SRC_O = $(patsubst %.c,$(PROFDIR)/%.o,$(notdir $(LIBDE_SRC_C)))
+
 # for library including coverage
 # LIBDECOV = bin/libdaeccov.so
 LIBDECOV_SRC_O = $(patsubst %.c,$(COVDIR)/%.o,$(notdir $(LIBDE_SRC_C)))
 LIBDECOV_SRC_GCOV = $(patsubst %.c,%.c.gcov,$(notdir $(LIBDE_SRC_C)))
+
+# for library instrumented for profiling
+LIBDEPROF_SRC_O = $(patsubst %.c,$(PROFDIR)/%.o,$(notdir $(LIBDE_SRC_C)))
 
 # for our shell executable (for now just an example how to use our library)
 DESH = bin/desh
@@ -65,6 +76,12 @@ DESH = bin/desh
 DESH_SRC_C = src/desh.c
 DESH_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(DESH_SRC_C)))
 DESH_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
+
+PROF = bin/prof
+# PROF_SRC_H = daec.h 
+PROF_SRC_C = src/prof.c
+PROF_SRC_O = $(patsubst %.c,$(PROFDIR)/%.o,$(notdir $(PROF_SRC_C)))
+# PROF_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaecprof
 
 TEST = bin/test
 TEST_SRC_C = src/test.c
@@ -82,6 +99,7 @@ all :: lib sqlite3
 # include auto-generated dependencies
 include $(CACHEDIR)/Makefile.dep
 include $(COVDIR)/Makefile.dep
+include $(PROFDIR)/Makefile.dep
 
 # auto-generate dependencies of each .o file on its .c and .h sources
 $(CACHEDIR)/Makefile.dep: $(wildcard $(patsubst %,%/*.c,$(VPATH))) | $(CACHEDIR)
@@ -93,6 +111,11 @@ $(COVDIR)/Makefile.dep: $(wildcard $(patsubst %,%/*.c,$(VPATH))) | $(COVDIR)
 	@$(CC) $(patsubst %,-I%,$(VPATH)) -MM $^ > $@
 	@sed -i -e 's,^\(.*\)\.o,$(COVDIR)/\1.o,g' $@
 
+# auto-generate dependencies of each .o file on its .c and .h sources
+$(PROFDIR)/Makefile.dep: $(wildcard $(patsubst %,%/*.c,$(VPATH))) | $(PROFDIR)
+	@$(CC) $(patsubst %,-I%,$(VPATH)) -MM $^ > $@
+	@sed -i -e 's,^\(.*\)\.o,$(PROFDIR)/\1.o,g' $@
+
 # make .cache directory
 $(CACHEDIR) :
 	@mkdir -p $(CACHEDIR)
@@ -100,6 +123,10 @@ $(CACHEDIR) :
 # make .cache/cov directory
 $(COVDIR) : | $(CACHEDIR)
 	@mkdir -p $(COVDIR)
+
+# make .cache/prof directory
+$(PROFDIR) : | $(CACHEDIR)
+	@mkdir -p $(PROFDIR)
 
 # make bin directory
 bin :
@@ -112,6 +139,10 @@ $(CACHEDIR)/%.o : %.c | $(CACHEDIR)
 # redirect generated .o files into .cache
 $(COVDIR)/%.o : %.c | $(COVDIR)
 	$(COMPILE.c) $(CFLAGS_COV) $(OUTPUT_OPTION) $<
+
+# redirect generated .o files into .cache
+$(PROFDIR)/%.o : %.c | $(PROFDIR)
+	$(COMPILE.c) $(CFLAGS_PROF) $(OUTPUT_OPTION) $<
 
 # link sqlite3 shell executable
 $(SQLITE3): $(SQLITE3_SRC_O) | bin
@@ -129,6 +160,10 @@ $(LIBDECOV): $(LIBDECOV_SRC_O) $(CACHEDIR)/sqlite3.o | bin
 $(DESH): $(DESH_SRC_O) | $(LIBDE) bin
 	$(LINK.c) $^ -o $@ $(DESH_LDFLAGS)
 
+# link profiling executable
+$(PROF): $(PROF_SRC_O) $(LIBDEPROF_SRC_O) $(CACHEDIR)/sqlite3.o | bin
+	$(LINK.c) -pg $^ -o $@ $(MY_LDFLAGS)
+
 # link test executable with library with coverage
 $(TEST): $(TEST_SRC_O) | $(LIBDE) bin
 	$(LINK.c) $^ -o $@ $(TEST_LDFLAGS)
@@ -139,7 +174,7 @@ $(TESTCOV): $(TEST_SRC_O) | $(LIBDECOV) bin
 
 # delete most generated files
 .PHONY : clean
-clean :: clean_cov
+clean :: clean_cov clean_prof
 	@rm -f $(LIBDE) $(LIBDE_SRC_O) $(TEST) $(TEST_SRC_O) $(DESH) $(DESH_SRC_O)
 
 # delete all generated files
@@ -154,6 +189,13 @@ lib :: $(LIBDE)
 .PHONY : desh
 desh :: $(DESH)
 
+.PHONY : prof
+prof :: $(PROF) | $(SQLITE3)
+	rm -f prof.daec gmon.out prof.txt
+	bash -c "time $(PROF)"
+	gprof $(PROF) gmon.out > prof.txt
+	$(SQLITE3) prof.daec 'select count(*) from objects'
+
 .PHONY : sqlite3
 sqlite3 :: $(SQLITE3)
 
@@ -162,6 +204,12 @@ sqlite3 :: $(SQLITE3)
 clean_cov ::
 	@rm -rf $(COVDIR)
 	@rm -f $(LIBDECOV) $(TESTCOV) $(LIBDECOV_SRC_GCOV) lcov.info test.daec
+
+# delete profiling files
+.PHONY : clean_prof
+clean_prof ::
+	@rm -rf $(PROFDIR)
+	@rm -f $(LIBDEPROF) $(PROF) prof.daec gmon.out prof.txt
 
 .PHONY : test
 test :: $(TEST) 

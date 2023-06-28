@@ -50,3 +50,4 @@ bin/
 *.gcov
 lcov.info
 
+prof.txt
