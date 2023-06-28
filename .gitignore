@@ -51,3 +51,6 @@ bin/
 lcov.info
 
 prof.txt
+example
+example.exe
+example.daec
