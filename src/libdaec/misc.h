@@ -21,9 +21,9 @@
     * If on entry 0 <= `*bufsize` < number of bytes needed, `buffer` is not
       accessed, the necessary buffer size is written into `*bufsize`, and
       return error code DE_SHORT_BUF.
-    * If on entry `*bufsize` is sufficiently large, write the packed
+    * If on entry `*bufsize` is sufficiently large, we write the packed
       representation into `buffer` (must not be NULL) and the number of bytes
-      actually used in `*buffer`.
+      actually used in `*bufsize`.
 */
 int de_pack_strings(const char **strvec, int64_t length, char *buffer, int64_t *bufsize);
 
