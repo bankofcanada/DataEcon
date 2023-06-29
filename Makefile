@@ -176,6 +176,7 @@ $(TESTCOV): $(TEST_SRC_O) | $(LIBDECOV) bin
 .PHONY : clean
 clean :: clean_cov clean_prof
 	@rm -f $(LIBDE) $(LIBDE_SRC_O) $(TEST) $(TEST_SRC_O) $(DESH) $(DESH_SRC_O)
+	@rm -f example example.daec
 
 # delete all generated files
 .PHONY : purge
