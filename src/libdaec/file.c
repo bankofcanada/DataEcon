@@ -115,7 +115,7 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
         return "INSERT INTO `scalars` (`id`, `frequency`, `value`) VALUES (?,?,?);";
     case stmt_store_tseries:
         return "INSERT INTO `tseries` (`id`, `eltype`, `axis_id`, `value`) VALUES (?,?,?,?);";
-    case stmt_new_mvtseries:
+    case stmt_store_mvtseries:
         return "INSERT INTO `mvtseries` (`id`, `eltype`, `axis1_id`, `axis2_id`, `value`) VALUES (?,?,?,?,?);";
     case stmt_new_axis:
         return "INSERT INTO `axes` (`type`, `length`, `frequency`, `data`) VALUES (?,?,?,?);";

@@ -7,6 +7,9 @@
 #include "file.h"
 #include "object.h"
 #include "scalar.h"
+#include "axis.h"
+#include "tseries.h"
+#include "mvtseries.h"
 #include "sql.h"
 #include "misc.h"
 
@@ -406,7 +409,9 @@ int sql_new_axis(de_file de, axis_t *axis)
 /**************************************************************/
 /* tseries */
 
-int sql_store_tseries_value(de_file de, obj_id_t id, type_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value)
+int sql_store_tseries_value(de_file de, obj_id_t id, type_t eltype,
+                            axis_id_t axis_id, int64_t nbytes,
+                            const void *value)
 {
     sqlite3_stmt *stmt = _get_statement(de, stmt_store_tseries);
     if (stmt == NULL)
@@ -452,6 +457,68 @@ int sql_load_tseries_value(de_file de, obj_id_t id, tseries_t *tseries)
     case SQLITE_ROW:
         _fill_tseries(stmt, tseries);
         TRACE_RUN(sql_load_axis(de, tseries->axis.id, &(tseries->axis)));
+        return DE_SUCCESS;
+    case SQLITE_DONE:
+        return error(DE_BAD_OBJ);
+    default:
+        return rc_error(rc);
+    }
+}
+
+/**************************************************************/
+/* mvtseries */
+
+int sql_store_mvtseries_value(de_file de, obj_id_t id, type_t eltype,
+                              axis_id_t axis1_id, axis_id_t axis2_id,
+                              int64_t nbytes, const void *value)
+{
+    sqlite3_stmt *stmt = _get_statement(de, stmt_store_mvtseries);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
+    CHECK_SQLITE(sqlite3_bind_int(stmt, 2, eltype));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 3, axis1_id));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 4, axis2_id));
+    if (value != NULL && nbytes > 0)
+    {
+        CHECK_SQLITE(sqlite3_bind_blob(stmt, 5, value, nbytes, SQLITE_TRANSIENT));
+    }
+    else
+    {
+        CHECK_SQLITE(sqlite3_bind_null(stmt, 5));
+    }
+    rc = sqlite3_step(stmt);
+    return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
+}
+
+void _fill_mvtseries(sqlite3_stmt *stmt, mvtseries_t *mvtseries)
+{
+    obj_id_t id = sqlite3_column_int64(stmt, 0);
+    if (id != mvtseries->object.id)
+        error(DE_BAD_OBJ);
+    mvtseries->eltype = sqlite3_column_int(stmt, 1);
+    mvtseries->axis1.id = sqlite3_column_int64(stmt, 2);
+    mvtseries->axis2.id = sqlite3_column_int64(stmt, 3);
+    mvtseries->nbytes = sqlite3_column_bytes(stmt, 4);
+    mvtseries->value = sqlite3_column_blob(stmt, 4);
+}
+
+int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries)
+{
+    sqlite3_stmt *stmt = _get_statement(de, stmt_load_mvtseries);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
+    switch (rc = sqlite3_step(stmt))
+    {
+    case SQLITE_ROW:
+        _fill_mvtseries(stmt, mvtseries);
+        TRACE_RUN(sql_load_axis(de, mvtseries->axis1.id, &(mvtseries->axis1)));
+        TRACE_RUN(sql_load_axis(de, mvtseries->axis2.id, &(mvtseries->axis2)));
         return DE_SUCCESS;
     case SQLITE_DONE:
         return error(DE_BAD_OBJ);

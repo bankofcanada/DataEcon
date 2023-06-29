@@ -9,7 +9,7 @@ extern "C"
 {
 #endif
 
-    /* ***************************** error ************************************* */
+    /* ***************************** error *************************************** */
 
     /* Return the result code of the most recent error. If msg != NULL, fill msg with
     the corresponding error message and clear the error. */
@@ -43,7 +43,7 @@ extern "C"
         DE_INTERNAL,          /* internal error */
     };
 
-    /* ***************************** file ************************************* */
+    /* ***************************** file **************************************** */
 
     typedef void *de_file;
 
@@ -187,7 +187,7 @@ extern "C"
     /* create new catalog. return error if catalog already exists */
     int de_new_catalog(de_file de, obj_id_t pid, const char *name, obj_id_t *id);
 
-    /* ***************************** scalar ************************************* */
+    /* ***************************** scalar ************************************** */
 
     typedef struct
     {
@@ -199,13 +199,13 @@ extern "C"
 
     /* create a new scalar object in a given parent catalog */
     int de_store_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
-                      frequency_t freq, int64_t nbytes, const void *value,
-                      obj_id_t *id);
+                        frequency_t freq, int64_t nbytes, const void *value,
+                        obj_id_t *id);
 
     /* load a scalar object by name from a given parent catalog */
     int de_load_scalar(de_file de, obj_id_t id, scalar_t *scalar);
 
-    /* ***************************** axis ************************************* */
+    /* ***************************** axis **************************************** */
 
     typedef int64_t axis_id_t;
 
@@ -249,14 +249,38 @@ extern "C"
 
     /* create a new 1d-array object in a given parent catalog */
     int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
-                       type_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value,
-                       obj_id_t *id);
+                         type_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value,
+                         obj_id_t *id);
 
     /* load a 1d-array object by name from a given parent catalog */
     int de_load_tseries(de_file de, obj_id_t id, tseries_t *tseries);
 
+    /* ***************************** mvtseries *********************************** */
+
+    typedef struct
+    {
+        object_t object;
+        type_t eltype;
+        axis_t axis1;
+        axis_t axis2;
+        int64_t nbytes;
+        const void *value; /* we don't manage the memory for the value */
+    } mvtseries_t;
+    typedef mvtseries_t matrix_t;
+
+    /* create a new 1d-array object in a given parent catalog */
+    int de_store_mvtseries(de_file de, obj_id_t pid, const char *name, type_t type,
+                           type_t eltype, axis_id_t axis1_id, axis_id_t axis2_id,
+                           int64_t nbytes, const void *value,
+                           obj_id_t *id);
+
+    /* load a 1d-array object by name from a given parent catalog */
+    int de_load_mvtseries(de_file de, obj_id_t id, mvtseries_t *mvtseries);
+
+    /* ***************************** misc **************************************** */
     /*
-        pack a vector of strings into a contiguous memory buffer
+        pack a vector of strings into a contiguous memory buffer.
+        this may be needed before writing an array of strings
         NOTES:
         * each string in the list must be '\0'-terminated.
         * we use '\0' character to separate the individual strings in the buffer.
@@ -274,20 +298,39 @@ extern "C"
     */
     int de_pack_strings(const char **strvec, int64_t length, char *buffer, int64_t *bufsize);
 
-    /* "unpack" a buffer of strings into a vector of '\0'- terminated strings */
+    /* "unpack" a buffer of strings into a vector of '\0'- terminated strings
+       this may be needed after reading an array of strings
+       NOTES:
+        * `strvec` must point to a vector of `length` pointers to char. The pointers
+          will be populated with the addresses of the beginnings of the individual
+          strings packed in `buffer`
+        * no data is actually copied
+        * if there aren't `length` strings within the first `bufsize` bytes of
+          `buffer`, return DE_ARG
+        * all pointes written in `strvec` point between `buffer` and
+          `buffer + bufsize - 1`.
+    */
     int de_unpack_strings(const char *buffer, int64_t bufsize, const char **strvec, int64_t length);
 
-    /* ***************************** mvtseries ************************************* */
-
-    /* ***************************** search ************************************* */
+    /* ***************************** search ************************************** */
 
     typedef void *de_search;
 
+    /* start a search that yields all objects in the given catalog id */
     int de_list_catalog(de_file de, obj_id_t pid, de_search *search);
+
+    /* start a search that yields objects in the given catalog, that
+    additionally match the given criteria for wildcard, type and class. To skip
+    individual filters, set wc to NULL, type to type_any and class to class_any.
+    */
     int de_search_catalog(de_file de, obj_id_t pid, const char *wc,
                           type_t type, class_t cls, de_search *search);
 
+    /* Return DE_SUCCESS and load the next object in a search. Return DE_NO_OBJ
+    when search is done. */
     int de_next_object(de_search search, object_t *object);
+
+    /* Release resources allocated for the given search. */
     int de_finalize_search(de_search search);
 
 #ifdef __cplusplus

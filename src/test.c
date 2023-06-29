@@ -1,15 +1,6 @@
 
 #include "daec.h"
 
-// #include "libdaec/error.h"
-// #include "libdaec/file.h"
-// #include "libdaec/object.h"
-// #include "libdaec/catalog.h"
-// #include "libdaec/scalar.h"
-// #include "libdaec/axis.h"
-// #include "libdaec/tseries.h"
-// #include "libdaec/search.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,7 +10,7 @@
 static de_file de;
 static int checks;
 
-void fail(const char *message, const char *file, int line)
+void fail(const char *file, int line, const char *message)
 {
     printf("Tests passed: %d\n", checks);
     printf("Fail at %s:%d: %s\n", file, line, message);
@@ -27,51 +18,53 @@ void fail(const char *message, const char *file, int line)
     exit(EXIT_FAILURE);
 }
 
-#define FAIL(msg) fail(msg, __FILE__, __LINE__)
+#define FAIL(msg) fail(__FILE__, __LINE__, msg)
 #define FAIL_IF(cond, msg)                 \
     {                                      \
         if (cond)                          \
-            fail(msg, __FILE__, __LINE__); \
+            fail(__FILE__, __LINE__, msg); \
         ++checks;                          \
     }
 
 void check(int rc, int expected, const char *file, int line)
 {
     static char message[4096];
-    if (rc == expected)
-    {
-        ++checks;
-        de_clear_error();
-        return;
-    }
     snprintf(message, sizeof message, "\nExpected: DE(%d)\nReceived: ", expected);
     int len = strlen(message);
     char *p = message + strlen(message);
     de_error_source(p, sizeof message - len - 1);
-    fail(message, file, line);
+    if (rc == expected)
+    {
+        ++checks;
+        de_clear_error();
+    }
+    else
+    {
+        fail(file, line, message);
+    }
 }
 
 #define CHECK_SCALAR(scalar, id, type, frequency, value) check_scalar(scalar, id, type, frequency, value, __FILE__, __LINE__)
 void check_scalar(scalar_t scalar, int64_t id, type_t type, frequency_t frequency, void *value, const char *file, int line)
 {
     if (scalar.object.id != id)
-        fail("Scalar id doesn't match.", file, line);
+        fail(file, line, "Scalar id doesn't match.");
     if (scalar.object.class != class_scalar)
-        fail("Scalar class doesn't match.", file, line);
+        fail(file, line, "Scalar class doesn't match.");
     if (scalar.object.type != type)
-        fail("Scalar type doesn't match.", file, line);
+        fail(file, line, "Scalar type doesn't match.");
     if (scalar.frequency != frequency)
-        fail("Scalar frequency doesn't match.", file, line);
+        fail(file, line, "Scalar frequency doesn't match.");
     if (scalar.value == NULL && value != NULL)
-        fail("Scalar value is unexpectedly NULL.", file, line);
+        fail(file, line, "Scalar value is unexpectedly NULL.");
     if (scalar.value != NULL && value == NULL)
-        fail("Scalar value is unexpectedly not NULL.", file, line);
+        fail(file, line, "Scalar value is unexpectedly not NULL.");
     if (scalar.value == NULL && scalar.nbytes != 0)
-        fail("Scalar nbytes is not 0 while value is NULL.", file, line);
+        fail(file, line, "Scalar nbytes is not 0 while value is NULL.");
     if (scalar.value != NULL && scalar.nbytes <= 0)
-        fail("Scalar nbytes is not positive while value is not NULL.", file, line);
+        fail(file, line, "Scalar nbytes is not positive while value is not NULL.");
     if (scalar.value != NULL && value != NULL && memcmp(scalar.value, value, scalar.nbytes) != 0)
-        fail("Scalar value doesn't match.", file, line);
+        fail(file, line, "Scalar value doesn't match.");
     ++checks;
 }
 
@@ -79,20 +72,20 @@ void check_scalar(scalar_t scalar, int64_t id, type_t type, frequency_t frequenc
 void check_axis(axis_t axis, axis_id_t id, axis_type_t type, int64_t length, frequency_t frequency, int64_t first, const char *names, const char *file, int line)
 {
     if (id >= 0 && id != axis.id)
-        fail("Axis id doesn't match", file, line);
+        fail(file, line, "Axis id doesn't match");
     if (axis.type != type)
-        fail("Axis type doesn't match", file, line);
+        fail(file, line, "Axis type doesn't match");
     if (axis.frequency != frequency)
-        fail("Axis frequency doesn't match", file, line);
+        fail(file, line, "Axis frequency doesn't match");
     if (axis.first != first)
-        fail("Axis first doesn't match", file, line);
+        fail(file, line, "Axis first doesn't match");
     if (axis.names == NULL && names == NULL)
     {
         ++checks;
         return;
     }
     if (axis.names == NULL || names == NULL || strcmp(axis.names, names) != 0)
-        fail("Axis names don't match", file, line);
+        fail(file, line, "Axis names don't match");
     ++checks;
 }
 
@@ -100,25 +93,56 @@ void check_axis(axis_t axis, axis_id_t id, axis_type_t type, int64_t length, fre
 void check_tseries(tseries_t tseries, obj_id_t id, type_t type, type_t eltype, axis_id_t axis, void *value, const char *file, int line)
 {
     if (tseries.object.id != id)
-        fail("TSeries id doesn't match.", file, line);
+        fail(file, line, "tseries id doesn't match.");
     if (tseries.object.class != class_tseries)
-        fail("TSeries class doesn't match.", file, line);
+        fail(file, line, "tseries class doesn't match.");
     if (tseries.object.type != type)
-        fail("TSeries type doesn't match.", file, line);
+        fail(file, line, "tseries type doesn't match.");
     if (tseries.eltype != eltype)
-        fail("TSeries eltype doesn't match.", file, line);
+        fail(file, line, "tseries eltype doesn't match.");
     if (tseries.axis.id != axis)
-        fail("TSeries axis doesn't match.", file, line);
+        fail(file, line, "tseries axis doesn't match.");
     if (tseries.value == NULL && value != NULL)
-        fail("TSeries value is unexpectedly NULL.", file, line);
+        fail(file, line, "tseries value is unexpectedly NULL.");
     if (tseries.value != NULL && value == NULL)
-        fail("TSeries value is unexpectedly not NULL.", file, line);
+        fail(file, line, "tseries value is unexpectedly not NULL.");
     if (tseries.value == NULL && tseries.nbytes != 0)
-        fail("TSeries nbytes is not 0 while value is NULL.", file, line);
+        fail(file, line, "tseries nbytes is not 0 while value is NULL.");
     if (tseries.value != NULL && tseries.nbytes <= 0)
-        fail("TSeries nbytes is not positive while value is not NULL.", file, line);
+        fail(file, line, "tseries nbytes is not positive while value is not NULL.");
     if (tseries.value != NULL && value != NULL && memcmp(tseries.value, value, tseries.nbytes) != 0)
-        fail("TSeries value doesn't match.", file, line);
+        fail(file, line, "tseries value doesn't match.");
+    ++checks;
+}
+
+#define CHECK_MVTSERIES(mvtseries, id, type, eltype, axis1, axis2, value) \
+    check_mvtseries(mvtseries, id, type, eltype, axis1, axis2, value, __FILE__, __LINE__)
+
+void check_mvtseries(mvtseries_t mvtseries, obj_id_t id, type_t type, type_t eltype,
+                     axis_id_t axis1, axis_id_t axis2, void *value, const char *file, int line)
+{
+    if (mvtseries.object.id != id)
+        fail(file, line, "mvtseries id doesn't match.");
+    if (mvtseries.object.class != class_mvtseries)
+        fail(file, line, "mvtseries class doesn't match.");
+    if (mvtseries.object.type != type)
+        fail(file, line, "mvtseries type doesn't match.");
+    if (mvtseries.eltype != eltype)
+        fail(file, line, "mvtseries eltype doesn't match.");
+    if (mvtseries.axis1.id != axis1)
+        fail(file, line, "mvtseries axis1 doesn't match.");
+    if (mvtseries.axis2.id != axis2)
+        fail(file, line, "mvtseries axis2 doesn't match.");
+    if (mvtseries.value == NULL && value != NULL)
+        fail(file, line, "mvtseries value is unexpectedly NULL.");
+    if (mvtseries.value != NULL && value == NULL)
+        fail(file, line, "mvtseries value is unexpectedly not NULL.");
+    if (mvtseries.value == NULL && mvtseries.nbytes != 0)
+        fail(file, line, "mvtseries nbytes is not 0 while value is NULL.");
+    if (mvtseries.value != NULL && mvtseries.nbytes <= 0)
+        fail(file, line, "mvtseries nbytes is not positive while value is not NULL.");
+    if (mvtseries.value != NULL && value != NULL && memcmp(mvtseries.value, value, mvtseries.nbytes) != 0)
+        fail(file, line, "mvtseries value doesn't match.");
     ++checks;
 }
 
@@ -127,6 +151,9 @@ void check_tseries(tseries_t tseries, obj_id_t id, type_t type, type_t eltype, a
 
 int main(void)
 {
+
+    CHECK(de_open("./path/does/not/exist/file.daec", &de), 14); /* SQLITE_CANTOPEN = 14 */
+
     const static char fname[] = "test.daec";
     unlink(fname);
     CHECK_SUCCESS(de_open(fname, &de));
@@ -224,8 +251,11 @@ int main(void)
         uint32_t four = 4;
         char five[] = "five";
         int64_t q2020Q1 = 2020 * 4 + 1;
-        CHECK(de_store_scalar(NULL, id_scalars, "one", type_float, freq_none, sizeof one, &one, NULL), DE_NULL);
+        CHECK(de_store_scalar(NULL, id_scalars, "fail", type_float, freq_none, sizeof one, &one, NULL), DE_NULL);
         CHECK(de_store_scalar(de, id_scalars, NULL, type_float, freq_none, sizeof one, &one, NULL), DE_NULL);
+        CHECK(de_store_scalar(de, id_scalars, "fail", type_none, freq_none, sizeof one, &one, NULL), DE_BAD_TYPE);
+        CHECK(de_store_scalar(de, id_scalars, "fail", type_tseries, freq_none, sizeof one, &one, NULL), DE_BAD_TYPE);
+        CHECK(de_store_scalar(de, id_scalars, "fail", type_mvtseries, freq_none, sizeof one, &one, NULL), DE_BAD_TYPE);
 
         CHECK_SUCCESS(de_store_scalar(de, id_scalars, "one", type_float, freq_none, sizeof one, &one, &id));
         CHECK_SUCCESS(de_store_scalar(de, id_scalars, "two", type_float, freq_none, sizeof two, &two, NULL));
@@ -406,8 +436,9 @@ int main(void)
 
         /* plain range */
         CHECK_SUCCESS(de_axis_plain(de, 11, &ax));
-        CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_integer, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_integer, type_integer, ax, 0, NULL, &_id), DE_BAD_TYPE);
         CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_tseries, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_mvtseries, type_float, ax, 0, NULL, &_id), DE_BAD_TYPE);
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "rng_plain", type_range, type_none, ax, 0, NULL, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
         CHECK_TSERIES(ts, _id, type_range, type_none, ax, NULL);
@@ -475,6 +506,49 @@ int main(void)
             FAIL_IF(
                 strcmp(svals[i], svals1[i]) != 0,
                 "String TSeries loaded values don't match");
+    }
+
+    /* test mvtseries */
+    {
+        obj_id_t cata;
+        CHECK_SUCCESS(de_new_catalog(de, 0, "mvtseries", &cata));
+
+        axis_id_t ax1;
+        axis_id_t ax2;
+        obj_id_t _id;
+        mvtseries_t data;
+
+        /* plain range */
+        CHECK(de_store_mvtseries(de, cata, "fail", type_integer, type_integer, ax1, ax2, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_mvtseries(de, cata, "fail", type_tseries, type_integer, ax1, ax2, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_mvtseries(de, cata, "fail", type_mvtseries, type_none, ax1, ax2, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_mvtseries(de, cata, "fail", type_mvtseries, type_tseries, ax1, ax2, 0, NULL, &_id), DE_BAD_TYPE);
+
+        CHECK(de_store_mvtseries(NULL, cata, "fail", type_matrix, type_integer, ax1, ax1, 0, NULL, &_id), DE_NULL);
+        CHECK(de_store_mvtseries(de, cata, NULL, type_matrix, type_integer, ax1, ax1, 0, NULL, &_id), DE_NULL);
+
+        CHECK(de_load_mvtseries(NULL, _id, &data), DE_NULL);
+        CHECK(de_load_mvtseries(de, _id, NULL), DE_NULL);
+        CHECK(de_load_mvtseries(de, cata, &data), DE_BAD_CLASS);
+
+        CHECK_SUCCESS(de_axis_plain(de, 0, &ax1));
+        CHECK_SUCCESS(de_store_mvtseries(de, cata, "empty", type_matrix, type_integer, ax1, ax1, 0, NULL, &_id));
+
+        CHECK_SUCCESS(de_load_mvtseries(de, _id, &data));
+        CHECK_MVTSERIES(data, _id, type_matrix, type_integer, ax1, ax1, NULL);
+
+        double values[3][2] = {{1, 2}, {3, 4}, {5, 6}};
+        CHECK_SUCCESS(de_axis_range(de, 2, freq_monthly, 550, &ax1));
+        char col_names[] = "apple\norange\ntomato";
+        CHECK_SUCCESS(de_axis_names(de, 3, col_names, &ax2));
+
+        axis_t ax_nms;
+        CHECK_SUCCESS(de_load_axis(de, ax2, &ax_nms));
+        CHECK_AXIS(ax_nms, ax2, axis_names, 3, freq_none, 0, col_names);
+
+        CHECK_SUCCESS(de_store_mvtseries(de, cata, "two_by_three", type_mvtseries, type_float, ax1, ax2, sizeof values, values, &_id));
+        CHECK_SUCCESS(de_load_mvtseries(de, _id, &data));
+        CHECK_MVTSERIES(data, _id, type_mvtseries, type_float, ax1, ax2, values);
     }
 
     /* test search and list */
@@ -574,6 +648,13 @@ int main(void)
             CHECK(rc, DE_NO_OBJ);
             CHECK_SUCCESS(de_finalize_search(search));
         }
+    }
+
+    {
+        de_search search;
+        CHECK_SUCCESS(de_list_catalog(de, 0, &search));
+        CHECK(de_close(de), 5); /* SQLITE_BUSY */
+        CHECK_SUCCESS(de_finalize_search(search));
     }
 
     CHECK_SUCCESS(de_close(de));

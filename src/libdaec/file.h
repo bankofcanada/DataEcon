@@ -28,7 +28,7 @@ typedef enum stmt_name
     stmt_new_object_info,
     stmt_store_scalar,
     stmt_store_tseries,
-    stmt_new_mvtseries,
+    stmt_store_mvtseries,
     stmt_new_axis,
     stmt_find_object,
     stmt_find_fullpath,
