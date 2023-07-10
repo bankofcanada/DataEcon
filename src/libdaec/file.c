@@ -12,15 +12,14 @@
 
 /* https://www.cprogramming.com/tutorial/unicode.html */
 
-int _init_file(de_file de)
-{
-
-#define RUN_SQL(sql)                                                \
-    if (SQLITE_OK != sqlite3_exec(de->db, (sql), NULL, NULL, NULL)) \
+#define RUN_SQL(de, sql)                                                \
+    if (SQLITE_OK != sqlite3_exec((de)->db, (sql), NULL, NULL, NULL)) \
         return db_error(de);
 
+int _init_file(de_file de)
+{
     /* make tables */
-    RUN_SQL(
+    RUN_SQL(de, 
         "CREATE TABLE `objects` ("
         "   `id` INTEGER PRIMARY KEY AUTOINCREMENT,"
         "   `pid` INTEGER NOT NULL,"
@@ -32,10 +31,10 @@ int _init_file(de_file de)
         ") STRICT;"
         // "CREATE INDEX `obj_1` ON `objects`(`pid`, `name`, `type`, `class`);"
         // "CREATE INDEX `obj_2` ON `objects`(`name`, `type`, `pid`, `class`);"
-        // "CREATE INDEX `obj_3` ON `objects`(`type`, `pid`, `name`, `class`);" 
+        // "CREATE INDEX `obj_3` ON `objects`(`type`, `pid`, `name`, `class`);"
         // "CREATE INDEX `obj_4` ON `objects`(`class`, `pid`, `name`, `type`);"
     );
-    RUN_SQL(
+    RUN_SQL(de, 
         "CREATE TABLE `objects_info` ("
         "   `id` INTEGER PRIMARY KEY,"
         "   `created` INTEGER NOT NULL,"
@@ -43,7 +42,7 @@ int _init_file(de_file de)
         "   `fullpath` TEXT NOT NULL,"
         "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
         ") STRICT;");
-    RUN_SQL(
+    RUN_SQL(de, 
         "CREATE TABLE `attributes` ("
         "   `id` INTEGER NOT NULL,"
         "   `name` TEXT NOT NULL,"
@@ -51,14 +50,14 @@ int _init_file(de_file de)
         "   PRIMARY KEY (`id`, `name`) ON CONFLICT REPLACE,"
         "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
         ") STRICT, WITHOUT ROWID;");
-    RUN_SQL(
+    RUN_SQL(de, 
         "CREATE TABLE `scalars` ("
         "   `id` INTEGER PRIMARY KEY,"
         "   `frequency` INTEGER NOT NULL,"
         "   `value` BLOB,"
         "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
         ") STRICT;");
-    RUN_SQL(
+    RUN_SQL(de, 
         "CREATE TABLE `axes`("
         "   `id` INTEGER PRIMARY KEY AUTOINCREMENT,"
         "   `type` INTEGER NOT NULL,"
@@ -66,9 +65,9 @@ int _init_file(de_file de)
         "   `frequency` INTEGER NOT NULL,"
         "   `data` ANY"
         ") STRICT;");
-    RUN_SQL(
+    RUN_SQL(de, 
         "CREATE INDEX `axes_1` ON `axes`(`type`, `length`, `frequency`, `data`);");
-    RUN_SQL(
+    RUN_SQL(de, 
         "CREATE TABLE `tseries` ("
         "   `id` INTEGER PRIMARY KEY,"
         "   `eltype` INTEGER NOT NULL,"
@@ -77,7 +76,7 @@ int _init_file(de_file de)
         "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
         "   FOREIGN KEY (`axis_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT"
         ") STRICT;");
-    RUN_SQL(
+    RUN_SQL(de, 
         "CREATE TABLE `mvtseries` ("
         "   `id` INTEGER PRIMARY KEY,"
         "   `eltype` INTEGER NOT NULL,"
@@ -88,15 +87,13 @@ int _init_file(de_file de)
         "   FOREIGN KEY (`axis1_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT,"
         "   FOREIGN KEY (`axis2_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT"
         ") STRICT;");
-    RUN_SQL(
+    RUN_SQL(de, 
         "INSERT INTO `objects` (`id`, `pid`, `class`, `type`, `name`)"
         "       VALUES (0, 0, 0, 0, '/');");
-    RUN_SQL(
+    RUN_SQL(de, 
         "INSERT INTO `objects_info` (`id`, `created`, `depth`, `fullpath`)"
         "       VALUES (0, unixepoch('now'), 0, '');"
         "");
-
-#undef RUN_SQL
 
     return DE_SUCCESS;
 }
@@ -244,9 +241,7 @@ int de_close(de_file de)
     if (de == NULL)
         return DE_SUCCESS;
     int rc;
-    if (de_commit(de) != DE_SUCCESS)
-        return trace_error();
-
+    TRACE_RUN(de_commit(de));
     for (stmt_name_t i = 0; i < stmt_last; ++i)
     {
         rc = sqlite3_finalize(de->stmt[i]);
@@ -261,4 +256,18 @@ int de_close(de_file de)
         return db_error(de);
     free(de);
     return rc;
+}
+
+int de_truncate(de_file de)
+{
+    if (de == NULL)
+        return error(DE_NULL);
+    TRACE_RUN(de_commit(de));
+    TRACE_RUN(de_begin_transaction(de));
+    RUN_SQL(de, 
+        "DELETE FROM `objects` WHERE `id` > 0;"
+        "DELETE FROM `axes`;"
+    );
+    TRACE_RUN(de_commit(de));
+    return DE_SUCCESS;
 }

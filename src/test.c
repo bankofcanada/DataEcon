@@ -657,6 +657,26 @@ int main(void)
         CHECK_SUCCESS(de_finalize_search(search));
     }
 
+    
+    {
+        object_t obj;
+        de_search search;
+        CHECK_SUCCESS(de_list_catalog(de, 0, &search));
+        CHECK_SUCCESS(de_next_object(search, &obj));
+        CHECK_SUCCESS(de_finalize_search(search));
+
+        CHECK_SUCCESS(de_truncate(de));
+        CHECK_SUCCESS(de_list_catalog(de, 0, &search));
+        CHECK(de_next_object(search, &obj), DE_NO_OBJ);
+        CHECK_SUCCESS(de_finalize_search(search));
+
+        CHECK_SUCCESS(de_close(de));
+        CHECK_SUCCESS(de_open(fname, &de));
+        CHECK_SUCCESS(de_list_catalog(de, 0, &search));
+        CHECK(de_next_object(search, &obj), DE_NO_OBJ);
+        CHECK_SUCCESS(de_finalize_search(search));
+    }
+
     CHECK_SUCCESS(de_close(de));
 
     printf("All %d tests passed.\n", checks);

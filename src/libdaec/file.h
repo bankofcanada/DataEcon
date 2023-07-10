@@ -18,6 +18,9 @@ int de_open(const char *fname, de_file *de);
 /* close a previously opened daec file */
 int de_close(de_file de);
 
+/* delete everything in the given daec file */
+int de_truncate(de_file de);
+
 /* ========================================================================= */
 /* internal */
 

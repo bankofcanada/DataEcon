@@ -53,6 +53,9 @@ extern "C"
     /* close a previously opened daec file */
     int de_close(de_file de);
 
+    /* delete everything in the given daec file */
+    int de_truncate(de_file de);
+
     /* ***************************** object  ************************************* */
 
     typedef enum
