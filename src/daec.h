@@ -41,6 +41,7 @@ extern "C"
         DE_NULL,              /* call with NULL pointer */
         DE_DEL_ROOT,          /* cannot delete the root catalog */
         DE_MIS_ATTR,          /* missing attribute (name) */
+        DE_INEXACT,           /* inexact date conversion, e.g. Saturday or Sunday specified as business daily date */
         DE_INTERNAL,          /* internal error */
     };
 
