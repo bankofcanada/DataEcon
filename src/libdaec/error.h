@@ -27,6 +27,7 @@ enum
     DE_BAD_CLASS,         /* class of object does not match */
     DE_BAD_TYPE,          /* type of object is not valid for its class */
     DE_BAD_NAME,          /* invalid object name */
+    DE_BAD_FREQ,          /* bad frequency */
     DE_SHORT_BUF,         /* provided buffer is too short */
     DE_OBJ_DNE,           /* object does not exist */
     DE_AXIS_DNE,          /* axis does not exist */

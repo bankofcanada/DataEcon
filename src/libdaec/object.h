@@ -8,6 +8,7 @@
 #include <sqlite3.h>
 
 #include "file.h"
+#include "dates.h"
 
 /* ========================================================================= */
 /* API */
@@ -43,64 +44,6 @@ typedef enum
     type_other_2d,
     type_any = -1
 } type_t;
-
-typedef enum
-{
-    freq_none = 0,
-    freq_unit = 1,
-    freq_daily = 4,
-    freq_bdaily = 5,
-    freq_monthly = 8,
-    freq_weekly = 16,
-    freq_weekly_sun0 = freq_weekly,
-    freq_weekly_mon,
-    freq_weekly_tue,
-    freq_weekly_wed,
-    freq_weekly_thu,
-    freq_weekly_fri,
-    freq_weekly_sat,
-    freq_weekly_sun7,
-    freq_weekly_sun = freq_weekly_sun7,
-    freq_quarterly = 32,
-    freq_quarterly_jan = freq_quarterly + 1,
-    freq_quarterly_feb,
-    freq_quarterly_mar,
-    freq_quarterly_apr = freq_quarterly + 1,
-    freq_quarterly_may,
-    freq_quarterly_jun,
-    freq_quarterly_jul = freq_quarterly + 1,
-    freq_quarterly_aug,
-    freq_quarterly_sep,
-    freq_quarterly_oct = freq_quarterly + 1,
-    freq_quarterly_nov,
-    freq_quarterly_dec,
-    freq_halfyearly = 64,
-    freq_halfyearly_jan = freq_halfyearly + 1,
-    freq_halfyearly_feb,
-    freq_halfyearly_mar,
-    freq_halfyearly_apr,
-    freq_halfyearly_may,
-    freq_halfyearly_jun,
-    freq_halfyearly_jul = freq_halfyearly + 1,
-    freq_halfyearly_aug,
-    freq_halfyearly_sep,
-    freq_halfyearly_oct,
-    freq_halfyearly_nov,
-    freq_halfyearly_dec,
-    freq_yearly = 128,
-    freq_yearly_jan = freq_yearly + 1,
-    freq_yearly_feb,
-    freq_yearly_mar,
-    freq_yearly_apr,
-    freq_yearly_may,
-    freq_yearly_jun,
-    freq_yearly_jul,
-    freq_yearly_aug,
-    freq_yearly_sep,
-    freq_yearly_oct,
-    freq_yearly_nov,
-    freq_yearly_dec,
-} frequency_t;
 
 /*****************************************************************************/
 

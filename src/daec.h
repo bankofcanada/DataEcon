@@ -30,6 +30,7 @@ extern "C"
         DE_BAD_CLASS,         /* class of object does not match */
         DE_BAD_TYPE,          /* type of object is not valid for its class */
         DE_BAD_NAME,          /* invalid object name */
+        DE_BAD_FREQ,          /* bad frequency */
         DE_SHORT_BUF,         /* provided buffer is too short */
         DE_OBJ_DNE,           /* object does not exist */
         DE_AXIS_DNE,          /* axis does not exist */
@@ -90,6 +91,52 @@ extern "C"
         type_any = -1
     } type_t;
 
+    typedef int64_t obj_id_t;
+
+    /* an instance of object_t corresponds to a row in the `catalog` table*/
+    /* we don't manage the memory for the name */
+    typedef struct
+    {
+        obj_id_t id;
+        obj_id_t pid;
+        class_t class;
+        type_t type;
+        const char *name;
+    } object_t;
+
+    /* find object id from parent and name */
+    int de_find_object(de_file de, obj_id_t pid, const char *name, obj_id_t *id);
+
+    /* load object from id*/
+    int de_load_object(de_file de, obj_id_t id, object_t *object);
+
+    /* delete object given id*/
+    int de_delete_object(de_file de, obj_id_t id);
+
+    /* set attribute by name */
+    int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *value);
+
+    /* get attribute by name */
+    int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **value);
+
+    /* get all attributes in a single string with format '"name"="value"' separated by `delim` */
+    int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
+                              int64_t *nattr, const char **names, const char **values);
+
+    /* get the full path of an object from its id */
+    int de_get_object_info(de_file de, obj_id_t id,
+                           const char **fullpath, int64_t *depth, int64_t *created);
+
+    /* get the id of an object from its fullpath */
+    int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id);
+
+    /* ***************************** catalog ************************************* */
+
+    /* create new catalog. return error if catalog already exists */
+    int de_new_catalog(de_file de, obj_id_t pid, const char *name, obj_id_t *id);
+
+    /* ***************************** date **************************************** */
+
     typedef enum
     {
         freq_none = 0,
@@ -148,49 +195,19 @@ extern "C"
         freq_yearly_dec,
     } frequency_t;
 
-    typedef int64_t obj_id_t;
-
-    /* an instance of object_t corresponds to a row in the `catalog` table*/
-    /* we don't manage the memory for the name */
     typedef struct
     {
-        obj_id_t id;
-        obj_id_t pid;
-        class_t class;
-        type_t type;
-        const char *name;
-    } object_t;
+        int64_t value;
+        frequency_t freq;
+    } date_t;
 
-    /* find object id from parent and name */
-    int de_find_object(de_file de, obj_id_t pid, const char *name, obj_id_t *id);
+    int de_pack_date(frequency_t freq, int64_t value, date_t *date);
+    int de_pack_year_period_date(frequency_t freq, int year, int period, date_t *date);
+    int de_pack_calendar_date(frequency_t freq, int year, int month, int day, date_t *date);
 
-    /* load object from id*/
-    int de_load_object(de_file de, obj_id_t id, object_t *object);
-
-    /* delete object given id*/
-    int de_delete_object(de_file de, obj_id_t id);
-
-    /* set attribute by name */
-    int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *value);
-
-    /* get attribute by name */
-    int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **value);
-
-    /* get all attributes in a single string with format '"name"="value"' separated by `delim` */
-    int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
-                              int64_t *nattr, const char **names, const char **values);
-
-    /* get the full path of an object from its id */
-    int de_get_object_info(de_file de, obj_id_t id,
-                           const char **fullpath, int64_t *depth, int64_t *created);
-
-    /* get the id of an object from its fullpath */
-    int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id);
-
-    /* ***************************** catalog ************************************* */
-
-    /* create new catalog. return error if catalog already exists */
-    int de_new_catalog(de_file de, obj_id_t pid, const char *name, obj_id_t *id);
+    int de_unpack_date(date_t date, frequency_t *freq, int64_t *value);
+    int de_unpack_year_period_date(date_t date, frequency_t *freq, int *year, int *period);
+    int de_unpack_calendar_date(date_t date, frequency_t *freq, int *year, int *month, int *day);
 
     /* ***************************** scalar ************************************** */
 

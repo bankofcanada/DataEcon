@@ -134,6 +134,9 @@ int de_error(char *restrict msg, size_t len)
         case DE_BAD_NAME:
             snprintf(msg, len, fmt1, code, "invalid object name", last_error.arg);
             break;
+        case DE_BAD_FREQ:
+            snprintf(msg, len, fmt, code, "bad frequency");
+            break;
         case DE_SHORT_BUF:
             snprintf(msg, len, fmt, code, "provided buffer is too short");
             break;
