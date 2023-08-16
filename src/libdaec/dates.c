@@ -253,7 +253,7 @@ int _encode_calendar(frequency_t freq, int32_t year, uint32_t month, uint32_t da
     }
     if (freq & freq_weekly)
     {
-        *N = _rata_die_to_septem(*N, freq);
+        *N = _rata_die_to_septem(*N, freq % 16);
         return DE_SUCCESS;
     }
     return error(DE_INTERNAL);
@@ -271,7 +271,7 @@ int _decode_calendar(frequency_t freq, int32_t N, int32_t *year, uint32_t *month
     }
     else if (freq & freq_weekly)
     {
-        N = _rata_die_from_septem(N, freq);
+        N = _rata_die_from_septem(N, freq % 16);
     }
     else
         return error(DE_INTERNAL);
@@ -307,8 +307,9 @@ int de_unpack_year_period_date(date_t date, frequency_t *freq, int32_t *year, ui
 {
     if (freq == NULL || year == NULL || period == NULL)
         return error(DE_NULL);
-    *freq = date.freq;
-    const int32_t N = date.value;
+    int64_t val;
+    TRACE_RUN(de_unpack_date(date, freq, &val))
+    const int32_t N = val;
     if (_has_ppy(*freq))
     {
         TRACE_RUN(_decode_ppy(*freq, N, year, period));
@@ -360,8 +361,9 @@ int de_unpack_calendar_date(date_t date, frequency_t *freq, int32_t *year, uint3
 {
     if (freq == NULL || year == NULL || month == NULL || day == NULL)
         return error(DE_NULL);
-    *freq = date.freq;
-    const int32_t N = date.value;
+    int64_t val;
+    TRACE_RUN(de_unpack_date(date, freq, &val))
+    const int32_t N = val;
     if (_has_ppy(*freq))
     {
         // This case is not implemented -- it requires frequency conversions

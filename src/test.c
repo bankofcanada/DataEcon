@@ -657,7 +657,6 @@ int main(void)
         CHECK_SUCCESS(de_finalize_search(search));
     }
 
-    
     {
         object_t obj;
         de_search search;
@@ -678,6 +677,88 @@ int main(void)
     }
 
     CHECK_SUCCESS(de_close(de));
+
+    // Test dates packing and unpacking
+    {
+        date_t d;
+        int64_t lN;
+        int32_t N, Y;
+        uint32_t M, D, P;
+        frequency_t fr;
+
+        CHECK(de_pack_date(freq_daily, 0, NULL), DE_NULL);
+        CHECK(de_pack_year_period_date(freq_daily, 0, 0, NULL), DE_NULL);
+        CHECK(de_pack_calendar_date(freq_daily, 0, 0, 0, NULL), DE_NULL);
+
+        CHECK(de_unpack_date(d, NULL, &lN), DE_NULL);
+        CHECK(de_unpack_date(d, &fr, NULL), DE_NULL);
+        CHECK(de_unpack_year_period_date(d, &fr, NULL, NULL), DE_NULL);
+        CHECK(de_unpack_year_period_date(d, NULL, &Y, NULL), DE_NULL);
+        CHECK(de_unpack_year_period_date(d, NULL, NULL, &P), DE_NULL);
+        CHECK(de_unpack_calendar_date(d, &fr, NULL, NULL, NULL), DE_NULL);
+        CHECK(de_unpack_calendar_date(d, NULL, &Y, NULL, NULL), DE_NULL);
+        CHECK(de_unpack_calendar_date(d, NULL, NULL, &M, NULL), DE_NULL);
+        CHECK(de_unpack_calendar_date(d, NULL, NULL, NULL, &D), DE_NULL);
+
+        CHECK(de_pack_calendar_date(freq_daily, -39000, 0, 0, &d), DE_RANGE);
+        CHECK(de_pack_calendar_date(freq_daily, 39000, 0, 0, &d), DE_RANGE);
+        CHECK(de_pack_calendar_date(freq_daily, 0, 15, 0, &d), DE_RANGE);
+
+        for (D = 1; D <= 31; D++)
+        {
+            CHECK_SUCCESS(de_pack_calendar_date(freq_daily, 1, 1, D, &d));
+            FAIL_IF(d.freq != freq_daily || d.value != D, "problem packing daily frequency");
+        }
+        for (D = 1; D <= 5; D++)
+        {
+            CHECK_SUCCESS(de_pack_calendar_date(freq_bdaily, 1, 1, D, &d));
+            FAIL_IF(d.freq != freq_bdaily || d.value != D, "problem packing daily frequency");
+        }
+        for (D = 6; D <= 7; D++)
+            CHECK(de_pack_calendar_date(freq_bdaily, 1, 1, D, &d), DE_INEXACT);
+        for (D = 8; D <= 12; D++)
+        {
+            CHECK_SUCCESS(de_pack_calendar_date(freq_bdaily, 1, 1, D, &d));
+            FAIL_IF(d.freq != freq_bdaily || d.value != D - 2, "problem packing business daily frequency");
+        }
+
+        for (fr = freq_weekly_sun0; fr <= freq_weekly_sun7; ++fr)
+        {
+            CHECK_SUCCESS(de_pack_calendar_date(fr, 1, 1, 1, &d));
+            FAIL_IF(d.freq != fr || d.value != 1, "problem packing with weekly frequency date");
+        }
+        for (D = 1; D <= 7; ++D)
+        {
+            fr = freq_weekly_sun0;
+            CHECK_SUCCESS(de_pack_calendar_date(fr, 1, 1, D, &d));
+            FAIL_IF(d.freq != fr || d.value != 1, "problem packing with weekly frequency date");
+        }
+
+        CHECK_SUCCESS(de_pack_calendar_date(freq_daily, 2023, 8, 16, &d));
+        FAIL_IF(d.freq != freq_daily, "daily");
+        d.value += 1;
+        CHECK_SUCCESS(de_unpack_calendar_date(d, &fr, &Y, &M, &D));
+        FAIL_IF(fr != freq_daily || Y != 2023 || M != 8 || D != 17, "daily");
+
+        CHECK_SUCCESS(de_pack_calendar_date(freq_bdaily, 2023, 7, 28, &d));
+        FAIL_IF(d.freq != freq_bdaily, "bdaily");
+        d.value += 1;  /* next business day after friday is monday */
+        CHECK_SUCCESS(de_unpack_calendar_date(d, &fr, &Y, &M, &D));
+        FAIL_IF(fr != freq_bdaily || Y != 2023 || M != 7 || D != 31, "bdaily");
+
+        for (fr = freq_weekly_sun0; fr <= freq_weekly_sat; ++fr)
+        {
+            /* 2023-8-13 is a sunday */
+            CHECK_SUCCESS(de_pack_calendar_date(fr, 2023, 8, 13, &d));
+            FAIL_IF(d.freq != fr, "weekly");
+            frequency_t f;
+            CHECK_SUCCESS(de_unpack_calendar_date(d, &f, &Y, &M, &D));
+            FAIL_IF(fr != f || Y != 2023 || M != 8 || D != 13 + fr % 16, "weekly")
+        }
+
+
+
+    }
 
     printf("All %d tests passed.\n", checks);
     return EXIT_SUCCESS;
