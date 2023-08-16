@@ -170,6 +170,9 @@ int de_error(char *restrict msg, size_t len)
         case DE_INEXACT:
             snprintf(msg, len, fmt, code, "inexact date conversion, e.g. Saturday or Sunday specified as business daily date");
             break;
+        case DE_RANGE:
+            snprintf(msg, len, fmt, code, "value out of range");
+            break;
         case DE_INTERNAL:
             snprintf(msg, len, fmt1, code, "internal error", last_error.arg);
             break;

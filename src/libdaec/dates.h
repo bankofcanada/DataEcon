@@ -8,7 +8,7 @@
 #include "file.h"
 #include "object.h"
 
-/* 
+/*
 
     Dates are used to index into tseries and mvtseries, so they are integers.
     Dates also have a frequency information. The encoding must be such that
@@ -19,7 +19,7 @@
     - unit frequency - indicates that we're using a regular integer instead of a date
     - calendar frequency - includes daily, weekly and business-daily
     - year-period frequency - monthly, quarterly, half-yearly, yearly
-    - custom 
+    - custom
 
     ## Year-period
     The frequency is represented with number of periods per year (ppy)
@@ -27,9 +27,9 @@
     encoded as year * ppy + period
 
     ## Calendar
-    The daily date is encoded as the number of days since a reference date. 
-    The encoding for weekly is the daily encoding divided by 7, with 
-    a the remainder according to the end date of the frequency. 
+    The daily date is encoded as the number of days since a reference date.
+    The encoding for weekly is the daily encoding divided by 7, with
+    a the remainder according to the end date of the frequency.
 
 */
 
@@ -91,19 +91,19 @@ typedef enum
     freq_yearly_dec,
 } frequency_t;
 
-typedef struct 
+typedef struct
 {
     int64_t value;
     frequency_t freq;
 } date_t;
 
 int de_pack_date(frequency_t freq, int64_t value, date_t *date);
-int de_pack_year_period_date(frequency_t freq, int year, int period, date_t *date);
-int de_pack_calendar_date(frequency_t freq, int year, int month, int day, date_t *date);
-
 int de_unpack_date(date_t date, frequency_t *freq, int64_t *value);
-int de_unpack_year_period_date(date_t date, frequency_t *freq, int *year, int *period);
-int de_unpack_calendar_date(date_t date, frequency_t *freq, int *year, int *month, int *day);
 
+int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, date_t *date);
+int de_unpack_year_period_date(date_t date, frequency_t *freq, int32_t *year, uint32_t *period);
+
+int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32_t day, date_t *date);
+int de_unpack_calendar_date(date_t date, frequency_t *freq, int32_t *year, uint32_t *month, uint32_t *day);
 
 #endif

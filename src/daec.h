@@ -42,6 +42,7 @@ extern "C"
         DE_DEL_ROOT,          /* cannot delete the root catalog */
         DE_MIS_ATTR,          /* missing attribute (name) */
         DE_INEXACT,           /* inexact date conversion, e.g. Saturday or Sunday specified as business daily date */
+        DE_RANGE,             /* value out of range */
         DE_INTERNAL,          /* internal error */
     };
 
@@ -203,12 +204,13 @@ extern "C"
     } date_t;
 
     int de_pack_date(frequency_t freq, int64_t value, date_t *date);
-    int de_pack_year_period_date(frequency_t freq, int year, int period, date_t *date);
-    int de_pack_calendar_date(frequency_t freq, int year, int month, int day, date_t *date);
-
     int de_unpack_date(date_t date, frequency_t *freq, int64_t *value);
-    int de_unpack_year_period_date(date_t date, frequency_t *freq, int *year, int *period);
-    int de_unpack_calendar_date(date_t date, frequency_t *freq, int *year, int *month, int *day);
+
+    int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, date_t *date);
+    int de_unpack_year_period_date(date_t date, frequency_t *freq, int32_t *year, uint32_t *period);
+
+    int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32_t day, date_t *date);
+    int de_unpack_calendar_date(date_t date, frequency_t *freq, int32_t *year, uint32_t *month, uint32_t *day);
 
     /* ***************************** scalar ************************************** */
 
