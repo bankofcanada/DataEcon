@@ -681,16 +681,17 @@ int main(void)
     // Test dates packing and unpacking
     {
         date_t d;
-        int64_t lN;
-        int32_t N, Y;
+        int32_t Y;
         uint32_t M, D, P;
         frequency_t fr;
 
         /**********************************************************************/
         /*  test errors */
 
-        CHECK(de_pack_year_period_date(freq_daily, 0, 0, NULL), DE_NULL);
-        CHECK(de_pack_calendar_date(freq_daily, 0, 0, 0, NULL), DE_NULL);
+        fr = freq_daily;
+
+        CHECK(de_pack_year_period_date(fr, 0, 0, NULL), DE_NULL);
+        CHECK(de_pack_calendar_date(fr, 0, 0, 0, NULL), DE_NULL);
 
         CHECK(de_unpack_year_period_date(fr, d, &Y, NULL), DE_NULL);
         CHECK(de_unpack_year_period_date(fr, d, NULL, &P), DE_NULL);
@@ -699,9 +700,9 @@ int main(void)
         CHECK(de_unpack_calendar_date(fr, d, NULL, &M, NULL), DE_NULL);
         CHECK(de_unpack_calendar_date(fr, d, NULL, NULL, &D), DE_NULL);
 
-        CHECK(de_pack_calendar_date(freq_daily, -39000, 0, 0, &d), DE_RANGE);
-        CHECK(de_pack_calendar_date(freq_daily, 39000, 0, 0, &d), DE_RANGE);
-        CHECK(de_pack_calendar_date(freq_daily, 0, 15, 0, &d), DE_RANGE);
+        CHECK(de_pack_calendar_date(fr, -39000, 0, 0, &d), DE_RANGE);
+        CHECK(de_pack_calendar_date(fr, 39000, 0, 0, &d), DE_RANGE);
+        CHECK(de_pack_calendar_date(fr, 0, 15, 0, &d), DE_RANGE);
 
         /**********************************************************************/
         /* test de_{pack,unpack}_calendar_date */
