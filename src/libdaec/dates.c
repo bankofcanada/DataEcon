@@ -158,27 +158,6 @@ int32_t _rata_die_from_profesto(int32_t Nb_U)
 }
 
 /*****************************************************************************************/
-/* handling the case where users provide their own date value */
-
-int de_pack_date(frequency_t freq, int64_t value, date_t *date)
-{
-    if (date == NULL)
-        return error(DE_NULL);
-    date->freq = freq;
-    date->value = value;
-    return DE_SUCCESS;
-}
-
-int de_unpack_date(date_t date, frequency_t *freq, int64_t *value)
-{
-    if (freq == NULL || value == NULL)
-        return error(DE_NULL);
-    *freq = date.freq;
-    *value = date.value;
-    return DE_SUCCESS;
-}
-
-/*****************************************************************************************/
 /* encoding and decoding dates with ppy frequencies */
 
 static const int YP_FREQS = freq_monthly | freq_quarterly | freq_halfyearly | freq_yearly;
@@ -299,27 +278,25 @@ int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, da
         TRACE_RUN(_encode_calendar(freq, year, 1, 1, &N));
         N = N + period - 1;
     }
-    TRACE_RUN(de_pack_date(freq, N, date));
+    *date = N;
     return DE_SUCCESS;
 }
 
-int de_unpack_year_period_date(date_t date, frequency_t *freq, int32_t *year, uint32_t *period)
+int de_unpack_year_period_date(frequency_t freq, date_t date, int32_t *year, uint32_t *period)
 {
-    if (freq == NULL || year == NULL || period == NULL)
+    if (year == NULL || period == NULL)
         return error(DE_NULL);
-    int64_t val;
-    TRACE_RUN(de_unpack_date(date, freq, &val))
-    const int32_t N = val;
-    if (_has_ppy(*freq))
+    const int32_t N = date;
+    if (_has_ppy(freq))
     {
-        TRACE_RUN(_decode_ppy(*freq, N, year, period));
+        TRACE_RUN(_decode_ppy(freq, N, year, period));
     }
     else
     {
         int32_t NY;
         uint32_t M, D;
-        TRACE_RUN(_decode_calendar(*freq, N, year, &M, &D));
-        TRACE_RUN(_encode_calendar(*freq, *year, 1, 1, &NY));
+        TRACE_RUN(_decode_calendar(freq, N, year, &M, &D));
+        TRACE_RUN(_encode_calendar(freq, *year, 1, 1, &NY));
         *period = N - NY + 1;
     }
     return DE_SUCCESS;
@@ -353,25 +330,23 @@ int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32
     {
         TRACE_RUN(_encode_calendar(freq, year, month, day, &N));
     }
-    TRACE_RUN(de_pack_date(freq, N, date));
+    *date = N;
     return DE_SUCCESS;
 }
 
-int de_unpack_calendar_date(date_t date, frequency_t *freq, int32_t *year, uint32_t *month, uint32_t *day)
+int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32_t *month, uint32_t *day)
 {
-    if (freq == NULL || year == NULL || month == NULL || day == NULL)
+    if (year == NULL || month == NULL || day == NULL)
         return error(DE_NULL);
-    int64_t val;
-    TRACE_RUN(de_unpack_date(date, freq, &val))
-    const int32_t N = val;
-    if (_has_ppy(*freq))
+    const int32_t N = date;
+    if (_has_ppy(freq))
     {
         // This case is not implemented -- it requires frequency conversions
         return error(DE_INTERNAL);
     }
     else
     {
-        TRACE_RUN(_decode_calendar(*freq, N, year, month, day));
+        TRACE_RUN(_decode_calendar(freq, N, year, month, day));
     }
     return DE_SUCCESS;
 }

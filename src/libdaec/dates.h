@@ -91,19 +91,12 @@ typedef enum
     freq_yearly_dec,
 } frequency_t;
 
-typedef struct
-{
-    int64_t value;
-    frequency_t freq;
-} date_t;
-
-int de_pack_date(frequency_t freq, int64_t value, date_t *date);
-int de_unpack_date(date_t date, frequency_t *freq, int64_t *value);
+typedef int64_t date_t;
 
 int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, date_t *date);
-int de_unpack_year_period_date(date_t date, frequency_t *freq, int32_t *year, uint32_t *period);
+int de_unpack_year_period_date(frequency_t freq, date_t date, int32_t *year, uint32_t *period);
 
 int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32_t day, date_t *date);
-int de_unpack_calendar_date(date_t date, frequency_t *freq, int32_t *year, uint32_t *month, uint32_t *day);
+int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32_t *month, uint32_t *day);
 
 #endif
