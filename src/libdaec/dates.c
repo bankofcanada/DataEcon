@@ -253,7 +253,7 @@ int _encode_calendar(frequency_t freq, int32_t year, uint32_t month, uint32_t da
     }
     if (freq & freq_weekly)
     {
-        *N = _rata_die_to_septem(*N, freq % 16);
+        *N = _rata_die_to_septem(*N, freq % freq_weekly);
         return DE_SUCCESS;
     }
     return error(DE_INTERNAL);
@@ -271,7 +271,7 @@ int _decode_calendar(frequency_t freq, int32_t N, int32_t *year, uint32_t *month
     }
     else if (freq & freq_weekly)
     {
-        N = _rata_die_from_septem(N, freq % 16);
+        N = _rata_die_from_septem(N, freq % freq_weekly);
     }
     else
         return error(DE_INTERNAL);

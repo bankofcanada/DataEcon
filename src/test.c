@@ -686,6 +686,9 @@ int main(void)
         uint32_t M, D, P;
         frequency_t fr;
 
+        /**********************************************************************/
+        /*  test errors */
+
         CHECK(de_pack_date(freq_daily, 0, NULL), DE_NULL);
         CHECK(de_pack_year_period_date(freq_daily, 0, 0, NULL), DE_NULL);
         CHECK(de_pack_calendar_date(freq_daily, 0, 0, 0, NULL), DE_NULL);
@@ -703,6 +706,10 @@ int main(void)
         CHECK(de_pack_calendar_date(freq_daily, -39000, 0, 0, &d), DE_RANGE);
         CHECK(de_pack_calendar_date(freq_daily, 39000, 0, 0, &d), DE_RANGE);
         CHECK(de_pack_calendar_date(freq_daily, 0, 15, 0, &d), DE_RANGE);
+
+        /**********************************************************************/
+        /* test de_{pack,unpack}_calendar_date */
+        /* these don't work with YP frequencies */
 
         for (D = 1; D <= 31; D++)
         {
@@ -740,8 +747,11 @@ int main(void)
         CHECK_SUCCESS(de_unpack_calendar_date(d, &fr, &Y, &M, &D));
         FAIL_IF(fr != freq_daily || Y != 2023 || M != 8 || D != 17, "daily");
 
-        CHECK_SUCCESS(de_pack_calendar_date(freq_bdaily, 2023, 7, 28, &d));
+        CHECK_SUCCESS(de_pack_calendar_date(freq_bdaily, 2023, 7, 27, &d));
         FAIL_IF(d.freq != freq_bdaily, "bdaily");
+        d.value += 1;  /* next business day after thursday is friday */
+        CHECK_SUCCESS(de_unpack_calendar_date(d, &fr, &Y, &M, &D));
+        FAIL_IF(fr != freq_bdaily || Y != 2023 || M != 7 || D != 28, "bdaily");
         d.value += 1;  /* next business day after friday is monday */
         CHECK_SUCCESS(de_unpack_calendar_date(d, &fr, &Y, &M, &D));
         FAIL_IF(fr != freq_bdaily || Y != 2023 || M != 7 || D != 31, "bdaily");
@@ -756,7 +766,65 @@ int main(void)
             FAIL_IF(fr != f || Y != 2023 || M != 8 || D != 13 + fr % 16, "weekly")
         }
 
+        /**********************************************************************/
+        /*  test de_pack_year_period_date */
 
+        frequency_t f;
+        for (fr = freq_yearly_jan; fr <= freq_yearly_dec; ++fr)
+        {
+            CHECK_SUCCESS(de_pack_year_period_date(fr, 0, 1, &d));
+            FAIL_IF(d.freq != fr || d.value != 0, "yearly");
+            CHECK_SUCCESS(de_unpack_year_period_date(d, &f, &Y, &P));
+            FAIL_IF(f != fr || Y != 0 || P != 1, "yearly");
+        }
+        for (fr = freq_halfyearly_jan; fr <= freq_halfyearly_dec; ++fr)
+        {
+            CHECK_SUCCESS(de_pack_year_period_date(fr, 0, 1, &d));
+            FAIL_IF(d.freq != fr || d.value != 0, "halfyearly"); 
+            CHECK_SUCCESS(de_unpack_year_period_date(d, &f, &Y, &P));
+            FAIL_IF(f != fr || Y != 0 || P != 1, "halfyearly");
+        }
+        for (fr = freq_quarterly_jan; fr <= freq_quarterly_dec; ++fr)
+        {
+            CHECK_SUCCESS(de_pack_year_period_date(fr, 0, 1, &d));
+            FAIL_IF(d.freq != fr || d.value != 0, "quarterly" );
+            CHECK_SUCCESS(de_unpack_year_period_date(d, &f, &Y, &P));
+            FAIL_IF(f != fr || Y != 0 || P != 1, "quarterly");
+        }
+        {
+            fr = freq_monthly;
+            CHECK_SUCCESS(de_pack_year_period_date(fr, 0, 1, &d));
+            FAIL_IF(d.freq != fr || d.value != 0, "monthly");
+            CHECK_SUCCESS(de_unpack_year_period_date(d, &f, &Y, &P));
+            FAIL_IF(f != fr || Y != 0 || P != 1, "monthly");
+        }
+        {
+            fr = freq_daily;
+            CHECK_SUCCESS(de_pack_year_period_date(fr, 1, 6, &d));
+            FAIL_IF(d.freq != fr || d.value != 6, "daily");
+            CHECK_SUCCESS(de_unpack_year_period_date(d, &f, &Y, &P));
+            FAIL_IF(f != fr || Y != 1 || P != 6, "daily");
+            CHECK_SUCCESS(de_unpack_calendar_date(d, &f, &Y, &M, &D));
+            FAIL_IF(f != fr || Y != 1 || M != 1 || D != 6, "daily");
+        }
+        {
+            fr = freq_bdaily;
+            CHECK_SUCCESS(de_pack_year_period_date(fr, 1, 6, &d));
+            FAIL_IF(d.freq != fr || d.value != 6, "bdaily");
+            CHECK_SUCCESS(de_unpack_year_period_date(d, &f, &Y, &P));
+            FAIL_IF(f != fr || Y != 1 || P != 6, "bdaily");
+            CHECK_SUCCESS(de_unpack_calendar_date(d, &f, &Y, &M, &D));
+            FAIL_IF(f != fr || Y != 1 || M != 1 || D != 8, "bdaily");
+        }
+        for (fr = freq_weekly_mon; fr <= freq_weekly_sun7; ++fr)
+        {
+            CHECK_SUCCESS(de_pack_year_period_date(fr, 1, 2, &d));
+            FAIL_IF(d.freq != fr || d.value != 2, "weekly");
+            CHECK_SUCCESS(de_unpack_year_period_date(d, &f, &Y, &P));
+            FAIL_IF(f != fr || Y != 1 || P != 2, "weekly");
+            CHECK_SUCCESS(de_unpack_calendar_date(d, &f, &Y, &M, &D));
+            FAIL_IF(f != fr || Y != 1 || M != 1 || D != 8 + fr - freq_weekly_mon, "weekly");
+        }
 
     }
 
