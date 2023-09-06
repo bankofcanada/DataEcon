@@ -149,6 +149,33 @@ void check_mvtseries(mvtseries_t mvtseries, obj_id_t id, type_t type, type_t elt
 #define CHECK_SUCCESS(x) check(x, DE_SUCCESS, __FILE__, __LINE__)
 #define CHECK(x, e) check(x, e, __FILE__, __LINE__)
 
+#define CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, N, y, m, d, p) \
+    check_pack_year_period_unpack_calendar(fr, N, y, m, d, p, __FILE__, __LINE__)
+
+void check_pack_year_period_unpack_calendar(frequency_t fr, date_t N,
+                                            int32_t y, uint32_t m, uint32_t d, uint32_t p,
+                                            const char *file, int line)
+{
+    date_t date;
+    int32_t Y;
+    uint32_t P, M, D;
+    check(de_pack_year_period_date(fr, y, p, &date), DE_SUCCESS, file, line);
+    if (date != N)
+        fail(file, line, "N does not match");
+    check(de_unpack_year_period_date(fr, date, &Y, &P), DE_SUCCESS, file, line);
+    if (Y != y)
+        fail(file, line, "year 1 does not match");
+    if (P != p)
+        fail(file, line, "period does not match");
+    check(de_unpack_calendar_date(fr, date, &Y, &M, &D), DE_SUCCESS, file, line);
+    if (Y != y)
+        fail(file, line, "year 2 does not match");
+    if (M != m)
+        fail(file, line, "month does not match");
+    if (D != d)
+        fail(file, line, "day does not match");
+}
+
 int main(void)
 {
 
@@ -794,30 +821,32 @@ int main(void)
         }
         {
             fr = freq_daily;
-            CHECK_SUCCESS(de_pack_year_period_date(fr, 1, 6, &d));
-            FAIL_IF(d != 6, "daily");
-            CHECK_SUCCESS(de_unpack_year_period_date(fr, d, &Y, &P));
-            FAIL_IF(Y != 1 || P != 6, "daily");
-            CHECK_SUCCESS(de_unpack_calendar_date(fr, d, &Y, &M, &D));
-            FAIL_IF(Y != 1 || M != 1 || D != 6, "daily");
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 6, 1, 1, 6, 6);
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 24160, 67, 2, 23, 54);
         }
         {
             fr = freq_bdaily;
-            CHECK_SUCCESS(de_pack_year_period_date(fr, 1, 6, &d));
-            FAIL_IF(d != 6, "bdaily");
-            CHECK_SUCCESS(de_unpack_year_period_date(fr, d, &Y, &P));
-            FAIL_IF(Y != 1 || P != 6, "bdaily");
-            CHECK_SUCCESS(de_unpack_calendar_date(fr, d, &Y, &M, &D));
-            FAIL_IF(Y != 1 || M != 1 || D != 8, "bdaily");
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 6, 1, 1, 8, 6);
+
+            /* Jan 1st year 1 is encoded as 1 */
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 1, 1, 1, 1, 1);
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 2, 1, 1, 2, 2);
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 0, 0, 12, 29, 260);
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, -259, 0, 1, 3, 1);
+
+            /* some random dates */
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 17258, 67, 2, 23, 38);
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 17686, 68, 10, 15, 206);
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, -11048, -42, 8, 26, 170);
         }
         for (fr = freq_weekly_mon; fr <= freq_weekly_sun7; ++fr)
         {
-            CHECK_SUCCESS(de_pack_year_period_date(fr, 1, 2, &d));
-            FAIL_IF(d != 2, "weekly");
-            CHECK_SUCCESS(de_unpack_year_period_date(fr, d, &Y, &P));
-            FAIL_IF(Y != 1 || P != 2, "weekly");
-            CHECK_SUCCESS(de_unpack_calendar_date(fr, d, &Y, &M, &D));
-            FAIL_IF(Y != 1 || M != 1 || D != 8 + fr - freq_weekly_mon, "weekly");
+            CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 2, 1, 1, 8 + fr - freq_weekly_mon, 2);
+
+            if (fr == freq_weekly_tue)
+                CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 3452 + (fr <= freq_weekly_tue), 67, 3, 1, 9);
+            else if (fr == freq_weekly_mon)
+                CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, 3452 + (fr <= freq_weekly_tue), 67, 2, 23 + (14 + fr - freq_weekly_wed) % 7, 8 + (fr <= freq_weekly_tue));
         }
     }
 

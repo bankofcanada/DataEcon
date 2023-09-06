@@ -238,6 +238,18 @@ int _encode_calendar(frequency_t freq, int32_t year, uint32_t month, uint32_t da
     return error(DE_INTERNAL);
 }
 
+int _encode_first_period(frequency_t freq, int32_t year, int32_t *N)
+{
+    int rc = _encode_calendar(freq, year, 1, 1, N);
+    if (rc == DE_INEXACT)
+    {
+        /* freq == freq_bdaily and Jan 1-st is on a weekend */
+        *N = *N + 1;
+        rc = de_clear_error();
+    }
+    return rc;
+}
+
 int _decode_calendar(frequency_t freq, int32_t N, int32_t *year, uint32_t *month, uint32_t *day)
 {
     if (freq == freq_daily)
@@ -275,7 +287,7 @@ int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, da
     }
     else
     {
-        TRACE_RUN(_encode_calendar(freq, year, 1, 1, &N));
+        TRACE_RUN(_encode_first_period(freq, year, &N));
         N = N + period - 1;
     }
     *date = N;
@@ -295,8 +307,10 @@ int de_unpack_year_period_date(frequency_t freq, date_t date, int32_t *year, uin
     {
         int32_t NY;
         uint32_t M, D;
+        /* call decode to get the year */
         TRACE_RUN(_decode_calendar(freq, N, year, &M, &D));
-        TRACE_RUN(_encode_calendar(freq, *year, 1, 1, &NY));
+        /* call encode to get the N-value of first period of the year */
+        TRACE_RUN(_encode_first_period(freq, *year, &NY));
         *period = N - NY + 1;
     }
     return DE_SUCCESS;
