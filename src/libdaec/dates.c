@@ -254,7 +254,7 @@ int _decode_calendar(frequency_t freq, int32_t N, int32_t *year, uint32_t *month
 {
     if (freq == freq_daily)
     {
-        N = N;
+        // N = N;
     }
     else if (freq == freq_bdaily)
     {

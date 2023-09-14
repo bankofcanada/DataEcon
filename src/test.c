@@ -179,6 +179,8 @@ void check_pack_year_period_unpack_calendar(frequency_t fr, date_t N,
 int main(void)
 {
 
+    CHECK(strcmp(DE_VERSION, de_version()), 0);
+
     CHECK(de_open("./path/does/not/exist/file.daec", &de), 14); /* SQLITE_CANTOPEN = 14 */
 
     const static char fname[] = "test.daec";
