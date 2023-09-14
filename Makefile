@@ -20,6 +20,8 @@ CFLAGS += $(patsubst %,-I%,$(VPATH))
 CFLAGS_COV = -fprofile-arcs -fprofile-abs-path -ftest-coverage 
 CFLAGS_PROF = -pg -O0 -g
 
+HAVE_READLINE = $(shell ./have_readline.sh $(CC))
+
 ifeq ($(target),)
 # $(target) not specified => use OS we're running in
 	ifeq ($(OS),Windows_NT)
@@ -49,7 +51,7 @@ endif
 # for the sqlite3 shell executable
 SQLITE3 = bin/sqlite3
 SQLITE3_SRC_H = sqlite3.h
-SQLITE3_SRC_C = src/sqlite3/sqlite3.c src/sqlite3/shell.c
+SQLITE3_SRC_C = src/sqlite3/shell.c
 SQLITE3_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(SQLITE3_SRC_C)))
 SQLITE3_LDFLAGS = $(MY_LDFLAGS)
 
@@ -144,9 +146,23 @@ $(COVDIR)/%.o : %.c | $(COVDIR)
 $(PROFDIR)/%.o : %.c | $(PROFDIR)
 	$(COMPILE.c) $(CFLAGS_PROF) $(OUTPUT_OPTION) $<
 
+ifeq ($(HAVE_READLINE),yes)
+
+# compile sqlite3 
+$(SQLITE3_SRC_O) : $(SQLITE3_SRC_C) | $(CACHEDIR)
+	$(COMPILE.c) -DHAVE_READLINE $(OUTPUT_OPTION) $<
+
 # link sqlite3 shell executable
-$(SQLITE3): $(SQLITE3_SRC_O) | bin
+$(SQLITE3): $(SQLITE3_SRC_O) $(CACHEDIR)/sqlite3.o | bin
+	$(LINK.c) $^ -o $@ $(SQLITE3_LDFLAGS) -lreadline
+
+else 
+
+# link sqlite3 shell executable
+$(SQLITE3): $(SQLITE3_SRC_O) $(CACHEDIR)/sqlite3.o | bin
 	$(LINK.c) $^ -o $@ $(SQLITE3_LDFLAGS)
+
+endif
 
 # link our library
 $(LIBDE): $(LIBDE_SRC_O) $(CACHEDIR)/sqlite3.o | bin
