@@ -4,8 +4,14 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "config.h"
 #include "misc.h"
 #include "error.h"
+
+const char *de_version(void)
+{
+    return DE_VERSION;
+}
 
 /* check if a file exists at the given path */
 bool _isfile(const char *path)

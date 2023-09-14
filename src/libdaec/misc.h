@@ -4,8 +4,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "config.h"
+
 /* ========================================================================= */
 /* API */
+
+/* return a static string containing the library version in format "x.y.z" */
+const char *de_version(void);
 
 /*
     pack a vector of strings into a contiguous memory buffer.
