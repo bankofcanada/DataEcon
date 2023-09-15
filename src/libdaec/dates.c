@@ -326,18 +326,20 @@ int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32
     int32_t N;
     if (_has_ppy(freq))
     {
-        /*
         uint32_t ppy;
         TRACE_RUN(_get_ppy(freq, &ppy));
         if (ppy > 12)
             return error(DE_INTERNAL);
-        const uint32_t P = (month - 1) * ppy / 12 + 1;
-        const uint32_t R = (month - 1) % ppy;
-        if (R)
-        TRACE_RUN(_encode_ppy(freq, year, P, &N));
-        */
-
-        // This case is not implemented -- it requires frequency conversions
+        const uint32_t X = freq % 16; /* end month of period in frequency*/
+        const uint32_t P = ((month - X) * ppy + 11) / 12 + 1;
+        if (P > ppy)
+        {
+            TRACE_RUN(_encode_ppy(freq, year + 1, P - ppy, &N));
+        }
+        else
+        {
+            TRACE_RUN(_encode_ppy(freq, year, P, &N));
+        }
         return error(DE_INTERNAL);
     }
     else
@@ -348,6 +350,15 @@ int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32
     return DE_SUCCESS;
 }
 
+uint32_t _day_in_month(int32_t Y, uint32_t M)
+{
+    if (M == 2)
+        return 28 + (Y % 4 == 0) - (Y % 100 == 0) + (Y % 400 == 0);
+    if (M < 8)
+        return 30 + M % 2;
+    return 31 - M % 2;
+}
+
 int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32_t *month, uint32_t *day)
 {
     if (year == NULL || month == NULL || day == NULL)
@@ -355,8 +366,18 @@ int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32
     const int32_t N = date;
     if (_has_ppy(freq))
     {
-        // This case is not implemented -- it requires frequency conversions
-        return error(DE_INTERNAL);
+        uint32_t ppy;
+        TRACE_RUN(_get_ppy(freq, &ppy));
+        if (ppy > 12)
+            return error(DE_INTERNAL);
+        uint32_t P;
+        int32_t Y;
+        TRACE_RUN(_decode_ppy(freq, N, &Y, &P));
+        const uint32_t X = freq % 16; /* end month of period in frequency*/
+        const uint32_t M = (P - (X > 0)) * 12 / ppy + X;
+        *year = Y;
+        *month = M;
+        *day = _day_in_month(Y, M);
     }
     else
     {
