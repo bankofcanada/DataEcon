@@ -12,88 +12,88 @@
 
 /* https://www.cprogramming.com/tutorial/unicode.html */
 
-#define RUN_SQL(de, sql)                                                \
+#define RUN_SQL(de, sql)                                              \
     if (SQLITE_OK != sqlite3_exec((de)->db, (sql), NULL, NULL, NULL)) \
         return db_error(de);
 
 int _init_file(de_file de)
 {
     /* make tables */
-    RUN_SQL(de, 
-        "CREATE TABLE `objects` ("
-        "   `id` INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "   `pid` INTEGER NOT NULL,"
-        "   `class` INTEGER NOT NULL,"
-        "   `type` INTEGER NOT NULL,"
-        "   `name` TEXT NOT NULL CHECK(LENGTH(`name`) > 0),"
-        "   FOREIGN KEY (`pid`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
-        "   UNIQUE (`pid`, `name` COLLATE BINARY) ON CONFLICT ROLLBACK"
-        ") STRICT;"
-        // "CREATE INDEX `obj_1` ON `objects`(`pid`, `name`, `type`, `class`);"
-        // "CREATE INDEX `obj_2` ON `objects`(`name`, `type`, `pid`, `class`);"
-        // "CREATE INDEX `obj_3` ON `objects`(`type`, `pid`, `name`, `class`);"
-        // "CREATE INDEX `obj_4` ON `objects`(`class`, `pid`, `name`, `type`);"
+    RUN_SQL(de,
+            "CREATE TABLE `objects` ("
+            "   `id` INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "   `pid` INTEGER NOT NULL,"
+            "   `class` INTEGER NOT NULL,"
+            "   `type` INTEGER NOT NULL,"
+            "   `name` TEXT NOT NULL CHECK(LENGTH(`name`) > 0),"
+            "   FOREIGN KEY (`pid`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
+            "   UNIQUE (`pid`, `name` COLLATE BINARY) ON CONFLICT ROLLBACK"
+            ") STRICT;"
+            // "CREATE INDEX `obj_1` ON `objects`(`pid`, `name`, `type`, `class`);"
+            // "CREATE INDEX `obj_2` ON `objects`(`name`, `type`, `pid`, `class`);"
+            // "CREATE INDEX `obj_3` ON `objects`(`type`, `pid`, `name`, `class`);"
+            // "CREATE INDEX `obj_4` ON `objects`(`class`, `pid`, `name`, `type`);"
     );
-    RUN_SQL(de, 
-        "CREATE TABLE `objects_info` ("
-        "   `id` INTEGER PRIMARY KEY,"
-        "   `created` INTEGER NOT NULL,"
-        "   `depth` INTEGER NOT NULL,"
-        "   `fullpath` TEXT NOT NULL,"
-        "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
-        ") STRICT;");
-    RUN_SQL(de, 
-        "CREATE TABLE `attributes` ("
-        "   `id` INTEGER NOT NULL,"
-        "   `name` TEXT NOT NULL,"
-        "   `value` TEXT,"
-        "   PRIMARY KEY (`id`, `name`) ON CONFLICT REPLACE,"
-        "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
-        ") STRICT, WITHOUT ROWID;");
-    RUN_SQL(de, 
-        "CREATE TABLE `scalars` ("
-        "   `id` INTEGER PRIMARY KEY,"
-        "   `frequency` INTEGER NOT NULL,"
-        "   `value` BLOB,"
-        "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
-        ") STRICT;");
-    RUN_SQL(de, 
-        "CREATE TABLE `axes`("
-        "   `id` INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "   `type` INTEGER NOT NULL,"
-        "   `length` INTEGER NOT NULL CHECK(`length` >= 0),"
-        "   `frequency` INTEGER NOT NULL,"
-        "   `data` ANY"
-        ") STRICT;");
-    RUN_SQL(de, 
-        "CREATE INDEX `axes_1` ON `axes`(`type`, `length`, `frequency`, `data`);");
-    RUN_SQL(de, 
-        "CREATE TABLE `tseries` ("
-        "   `id` INTEGER PRIMARY KEY,"
-        "   `eltype` INTEGER NOT NULL,"
-        "   `axis_id` INTEGER NOT NULL,"
-        "   `value` BLOB,"
-        "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
-        "   FOREIGN KEY (`axis_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT"
-        ") STRICT;");
-    RUN_SQL(de, 
-        "CREATE TABLE `mvtseries` ("
-        "   `id` INTEGER PRIMARY KEY,"
-        "   `eltype` INTEGER NOT NULL,"
-        "   `axis1_id` INTEGER NOT NULL,"
-        "   `axis2_id` INTEGER NOT NULL,"
-        "   `value` BLOB,"
-        "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
-        "   FOREIGN KEY (`axis1_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT,"
-        "   FOREIGN KEY (`axis2_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT"
-        ") STRICT;");
-    RUN_SQL(de, 
-        "INSERT INTO `objects` (`id`, `pid`, `class`, `type`, `name`)"
-        "       VALUES (0, 0, 0, 0, '/');");
-    RUN_SQL(de, 
-        "INSERT INTO `objects_info` (`id`, `created`, `depth`, `fullpath`)"
-        "       VALUES (0, unixepoch('now'), 0, '');"
-        "");
+    RUN_SQL(de,
+            "CREATE TABLE `objects_info` ("
+            "   `id` INTEGER PRIMARY KEY,"
+            "   `created` INTEGER NOT NULL,"
+            "   `depth` INTEGER NOT NULL,"
+            "   `fullpath` TEXT NOT NULL,"
+            "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
+            ") STRICT;");
+    RUN_SQL(de,
+            "CREATE TABLE `attributes` ("
+            "   `id` INTEGER NOT NULL,"
+            "   `name` TEXT NOT NULL,"
+            "   `value` TEXT,"
+            "   PRIMARY KEY (`id`, `name`) ON CONFLICT REPLACE,"
+            "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
+            ") STRICT, WITHOUT ROWID;");
+    RUN_SQL(de,
+            "CREATE TABLE `scalars` ("
+            "   `id` INTEGER PRIMARY KEY,"
+            "   `frequency` INTEGER NOT NULL,"
+            "   `value` BLOB,"
+            "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
+            ") STRICT;");
+    RUN_SQL(de,
+            "CREATE TABLE `axes`("
+            "   `id` INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "   `type` INTEGER NOT NULL,"
+            "   `length` INTEGER NOT NULL CHECK(`length` >= 0),"
+            "   `frequency` INTEGER NOT NULL,"
+            "   `data` ANY"
+            ") STRICT;");
+    RUN_SQL(de,
+            "CREATE INDEX `axes_1` ON `axes`(`type`, `length`, `frequency`, `data`);");
+    RUN_SQL(de,
+            "CREATE TABLE `tseries` ("
+            "   `id` INTEGER PRIMARY KEY,"
+            "   `eltype` INTEGER NOT NULL,"
+            "   `axis_id` INTEGER NOT NULL,"
+            "   `value` BLOB,"
+            "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
+            "   FOREIGN KEY (`axis_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT"
+            ") STRICT;");
+    RUN_SQL(de,
+            "CREATE TABLE `mvtseries` ("
+            "   `id` INTEGER PRIMARY KEY,"
+            "   `eltype` INTEGER NOT NULL,"
+            "   `axis1_id` INTEGER NOT NULL,"
+            "   `axis2_id` INTEGER NOT NULL,"
+            "   `value` BLOB,"
+            "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
+            "   FOREIGN KEY (`axis1_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT,"
+            "   FOREIGN KEY (`axis2_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT"
+            ") STRICT;");
+    RUN_SQL(de,
+            "INSERT INTO `objects` (`id`, `pid`, `class`, `type`, `name`)"
+            "       VALUES (0, 0, 0, 0, '/');");
+    RUN_SQL(de,
+            "INSERT INTO `objects_info` (`id`, `created`, `depth`, `fullpath`)"
+            "       VALUES (0, unixepoch('now'), 0, '');"
+            "");
 
     return DE_SUCCESS;
 }
@@ -170,7 +170,7 @@ sqlite3_stmt *_get_statement(de_file de, stmt_name_t stmt_name)
     return stmt;
 }
 
-int de_open(const char *fname, de_file *pde)
+int _open(const char *fname, de_file *pde, int flags)
 {
 
     if (pde == NULL)
@@ -181,10 +181,11 @@ int de_open(const char *fname, de_file *pde)
         return error(DE_ERR_ALLOC);
 
     int rc;
-    bool file_exists = _isfile(fname);
+    bool file_exists = ((flags & SQLITE_OPEN_MEMORY) == 0) && _isfile(fname);
 
-    if (SQLITE_OK != (rc = sqlite3_open(fname, &de->db)))
+    if (SQLITE_OK != (rc = sqlite3_open_v2(fname, &de->db, flags, NULL)))
     {
+        sqlite3_close(de->db);
         free(de);
         *pde = NULL;
         return rc_error(rc);
@@ -209,9 +210,22 @@ int de_open(const char *fname, de_file *pde)
         sqlite3_close(de->db);
         free(de);
         *pde = NULL;
-        remove(fname);
+        if (file_exists)
+            remove(fname);
         return trace_error();
     }
+    return DE_SUCCESS;
+}
+
+int de_open(const char *fname, de_file *pde)
+{
+    TRACE_RUN(_open(fname, pde, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
+    return DE_SUCCESS;
+}
+
+int de_open_memory(de_file *pde)
+{
+    TRACE_RUN(_open(":memory:", pde, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY));
     return DE_SUCCESS;
 }
 
@@ -264,10 +278,9 @@ int de_truncate(de_file de)
         return error(DE_NULL);
     TRACE_RUN(de_commit(de));
     TRACE_RUN(de_begin_transaction(de));
-    RUN_SQL(de, 
-        "DELETE FROM `objects` WHERE `id` > 0;"
-        "DELETE FROM `axes`;"
-    );
+    RUN_SQL(de,
+            "DELETE FROM `objects` WHERE `id` > 0;"
+            "DELETE FROM `axes`;");
     TRACE_RUN(de_commit(de));
     return DE_SUCCESS;
 }

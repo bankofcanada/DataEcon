@@ -183,6 +183,10 @@ int main(void)
 
     CHECK(de_open("./path/does/not/exist/file.daec", &de), 14); /* SQLITE_CANTOPEN = 14 */
 
+    CHECK(de_open_memory(NULL), DE_NULL);
+    CHECK_SUCCESS(de_open_memory(&de));
+    CHECK_SUCCESS(de_close(de));
+
     const static char fname[] = "test.daec";
     unlink(fname);
     CHECK_SUCCESS(de_open(fname, &de));

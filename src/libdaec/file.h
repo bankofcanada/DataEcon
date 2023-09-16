@@ -15,6 +15,9 @@ typedef de_file_t *de_file;
 /* open daec file */
 int de_open(const char *fname, de_file *de);
 
+/* open a daec database in memory */
+int de_open_memory(de_file *pde);
+
 /* close a previously opened daec file */
 int de_close(de_file de);
 
