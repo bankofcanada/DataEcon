@@ -21,6 +21,7 @@ CFLAGS_COV = -fprofile-arcs -fprofile-abs-path -ftest-coverage
 CFLAGS_PROF = -pg -O0 -g
 
 HAVE_READLINE = $(shell ./have_readline.sh $(CC))
+HAVE_ZLIB = $(shell ./have_zlib.sh $(CC))
 
 ifeq ($(target),)
 # $(target) not specified => use OS we're running in
@@ -78,6 +79,15 @@ DESH = bin/desh
 DESH_SRC_C = src/desh.c
 DESH_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(DESH_SRC_C)))
 DESH_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
+ifeq ($(HAVE_READLINE),yes)
+	DESH_CFLAGS += -DHAVE_READLINE
+	DESH_LDFLAGS += -lreadline
+endif
+ifeq ($(HAVE_ZLIB),yes)
+	DESH_CFLAGS += -DHAVE_ZLIB
+	DESH_LDFLAGS += -lz
+endif
+
 
 PROF = bin/prof
 # PROF_SRC_H = daec.h 
@@ -171,6 +181,10 @@ $(LIBDE): $(LIBDE_SRC_O) $(CACHEDIR)/sqlite3.o | bin
 # link our library with coverage
 $(LIBDECOV): $(LIBDECOV_SRC_O) $(CACHEDIR)/sqlite3.o | bin
 	$(LINK.c) -lgcov --coverage -shared $^ -o $@ $(LIBDE_LDFLAGS)
+
+# compile desh 
+$(DESH_SRC_O) : $(DESH_SRC_C) | $(CACHEDIR)
+	$(COMPILE.c) $(DESH_CFLAGS) $(OUTPUT_OPTION) $<
 
 # link shell to our library (example)
 $(DESH): $(DESH_SRC_O) | $(LIBDE) bin

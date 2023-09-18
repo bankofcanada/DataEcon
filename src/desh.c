@@ -127,6 +127,7 @@ char *strip(char *line)
 char *repl_read_command()
 {
 #ifdef HAVE_READLINE
+    printf("\n");
     return readline(desh_prompt);
 #else
     char *line = NULL;
@@ -141,8 +142,10 @@ char *repl_read_command()
 #endif
 }
 
-/***********************/
-/* TODO we need a proper parser and interpreter for this repl. */
+/****************************************************************************
+ * TODO: this is very primitive parsing and interpreting of user input.
+ *       we need a proper parser and interpreter for this repl.
+ ****************************************************************************/
 
 struct frequencies_map
 {
@@ -276,18 +279,6 @@ const char *_find_type_text(type_t type)
 
 void new_scalar(void)
 {
-    char const *name = strtok(NULL, " ");
-    if (name == NULL)
-    {
-        print_error("First argument must be the scalar's name");
-        return;
-    }
-    char const *equal = strtok(NULL, " ");
-    if (equal == NULL || strcmp(equal, "=") != 0)
-    {
-        print_error("Expected = found %s", equal);
-        return;
-    }
     char const *type_str = strtok(NULL, " ");
     if (type_str == NULL)
     {
@@ -307,6 +298,20 @@ void new_scalar(void)
             print_error("Scalar type %s not supported.", type_str);
             return;
         }
+    }
+
+    char const *name = strtok(NULL, " ");
+    if (name == NULL)
+    {
+        print_error("First argument must be the scalar's name");
+        return;
+    }
+
+    char const *equal = strtok(NULL, " ");
+    if (equal == NULL || strcmp(equal, "=") != 0)
+    {
+        print_error("Expected = found %s", equal);
+        return;
     }
 
     // parse scalar value
@@ -529,31 +534,31 @@ void list_database(void)
         print_de_error();
 }
 
+void print_help(FILE *F)
+{
+    fprintf(F, "%s - %s\n", "help", "show this message");
+    fprintf(F, "%s - %s\n", "version", "show version information");
+    fprintf(F, "%s - %s\n", "list", "list work database");
+    fprintf(F, "%s - %s\n", "display name", "display named object");
+    fprintf(F, "%s - %s\n", "delete name", "delete named object");
+    fprintf(F, "%s - %s\n", "scalar type name = value", "create new scalar object of the given type, name and value");
+    return;
+}
+
 void repl_execute(char *command_line)
 {
     char *command = strtok(command_line, " ");
+
+    if (strcmp(command, "help") == 0)
     {
-        obj_id_t id;
-        int rc = de_find_object(workdb, 0, command, &id);
-        if (rc == DE_SUCCESS)
-        {
-            print_object(id);
-            char *junk = strtok(NULL, " ");
-            if (junk != NULL)
-            {
-                print_error("Unexpected junk after object name: %s", junk);
-            }
-            return;
-        }
-        else if (rc == DE_OBJ_DNE)
-        {
-            de_clear_error();
-        }
-        else
-        {
-            print_de_error();
-            return;
-        }
+        print_help(stdout);
+        return;
+    }
+
+    if (strcmp(command, "version") == 0)
+    {
+        print_version(stdout);
+        return;
     }
 
     if (strcmp(command, "scalar") == 0)
@@ -571,6 +576,53 @@ void repl_execute(char *command_line)
             print_error("Unexpected junk after command: %s", junk);
         }
         return;
+    }
+
+    if (strcmp(command, "delete") == 0)
+    {
+        char *name = strtok(NULL, " ");
+        obj_id_t id;
+        int rc = de_find_object(workdb, 0, name, &id);
+        if (rc != DE_SUCCESS)
+        {
+            print_de_error();
+            return;
+        }
+        rc = de_delete_object(workdb, id);
+        if (rc != DE_SUCCESS)
+        {
+            print_de_error();
+            return;
+        }
+        char *junk = strtok(NULL, " ");
+        if (junk != NULL)
+        {
+            print_error("Unexpected junk after object name: %s", junk);
+        }
+        return;
+    }
+
+    if (strcmp(command, "display") == 0)
+    {
+        char *name = strtok(NULL, " ");
+        obj_id_t id;
+        int rc = de_find_object(workdb, 0, name, &id);
+        if (rc == DE_SUCCESS)
+        {
+            print_object(id);
+            fprintf(stdout, "\n");
+            char *junk = strtok(NULL, " ");
+            if (junk != NULL)
+            {
+                print_error("Unexpected junk after object name: %s", junk);
+            }
+            return;
+        }
+        else
+        {
+            print_de_error();
+            return;
+        }
     }
 
     fprintf(stdout, "   unknown command %s", command);
