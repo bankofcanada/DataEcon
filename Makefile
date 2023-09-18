@@ -88,6 +88,14 @@ ifeq ($(HAVE_ZLIB),yes)
 	DESH_LDFLAGS += -lz
 endif
 
+DAEC2CSV = bin/daec2csv
+DAEC2CSV_SRC_CC = src/daec2csv.cc
+DAEC2CSV_SRC_O =  $(patsubst %.cc,$(CACHEDIR)/%.o,$(notdir $(DAEC2CSV_SRC_CC)))
+DAEC2CSV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
+ifeq ($(HAVE_ZLIB),yes)
+	DAEC2CSV_CFLAGS += -DHAVE_ZLIB
+	DAEC2CSV_LDFLAGS += -lz
+endif
 
 PROF = bin/prof
 # PROF_SRC_H = daec.h 
@@ -190,6 +198,14 @@ $(DESH_SRC_O) : $(DESH_SRC_C) | $(CACHEDIR)
 $(DESH): $(DESH_SRC_O) | $(LIBDE) bin
 	$(LINK.c) $^ -o $@ $(DESH_LDFLAGS)
 
+# compile daec2csv 
+$(DAEC2CSV_SRC_O) : $(DAEC2CSV_SRC_CC) | $(CACHEDIR)
+	$(COMPILE.cc) $(DAEC2CSV_CFLAGS) $(OUTPUT_OPTION) $<
+
+# link daec2csv
+$(DAEC2CSV): $(DAEC2CSV_SRC_O) | $(LIBDE) bin
+	$(LINK.cc) $^ -o $@ $(DAEC2CSV_LDFLAGS)
+
 # link profiling executable
 $(PROF): $(PROF_SRC_O) $(LIBDEPROF_SRC_O) $(CACHEDIR)/sqlite3.o | bin
 	$(LINK.c) -pg $^ -o $@ $(MY_LDFLAGS)
@@ -229,6 +245,9 @@ prof :: $(PROF) | $(SQLITE3)
 
 .PHONY : sqlite3
 sqlite3 :: $(SQLITE3)
+
+.PHONY : utils
+utils :: $(SQLITE3) $(DESH) $(DAEC2CSV)
 
 # delete coverage files
 .PHONY : clean_cov
