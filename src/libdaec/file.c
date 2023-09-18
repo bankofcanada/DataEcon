@@ -223,6 +223,12 @@ int de_open(const char *fname, de_file *pde)
     return DE_SUCCESS;
 }
 
+int de_open_readonly(const char *fname, de_file *pde)
+{
+    TRACE_RUN(_open(fname, pde, SQLITE_OPEN_READONLY));
+    return DE_SUCCESS;
+}
+
 int de_open_memory(de_file *pde)
 {
     TRACE_RUN(_open(":memory:", pde, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY));

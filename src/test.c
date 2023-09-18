@@ -228,6 +228,7 @@ int main(void)
 
     const static char fname[] = "test.daec";
     unlink(fname);
+    CHECK(de_open_readonly(fname, &de), 14); /* sqlite3: unable to open database file*/
     CHECK_SUCCESS(de_open(fname, &de));
     CHECK_SUCCESS(de_close(de));
     CHECK_SUCCESS(de_open(fname, &de));

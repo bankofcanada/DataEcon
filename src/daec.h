@@ -61,8 +61,11 @@ extern "C"
 
     typedef void *de_file;
 
-    /* open daec file */
+    /* open daec file in read-write mode (if write-protected it might either get opened in read-only mode or fail)*/
     int de_open(const char *fname, de_file *de);
+
+    /* open daec file in read-only mode */
+    int de_open_readonly(const char *fname, de_file *de);
 
     /* open a daec database in memory */
     int de_open_memory(de_file *pde);
