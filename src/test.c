@@ -151,7 +151,6 @@ void check_mvtseries(mvtseries_t mvtseries, obj_id_t id, type_t type, type_t elt
 
 #define CHECK_PACK_YEAR_PERIOD_UNPACK_CALENDAR(fr, N, y, m, d, p) \
     check_pack_year_period_unpack_calendar(fr, N, y, m, d, p, __FILE__, __LINE__)
-
 void check_pack_year_period_unpack_calendar(frequency_t fr, date_t N,
                                             int32_t y, uint32_t m, uint32_t d, uint32_t p,
                                             const char *file, int line)
@@ -174,6 +173,46 @@ void check_pack_year_period_unpack_calendar(frequency_t fr, date_t N,
         fail(file, line, "month does not match");
     if (D != d)
         fail(file, line, "day does not match");
+}
+
+#define CHECK_YPP_PACK_UNPACK_CALENDAR(fr, ppy, mpp) \
+    check_ypp_pack_unpack_calendar(fr, ppy, mpp, __FILE__, __LINE__)
+void check_ypp_pack_unpack_calendar(frequency_t fr, int ppy, int mpp, const char *file, int line)
+{
+    const static int last_day_of_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int em = fr % 16;
+    if (em == 0)
+        em = mpp;
+    date_t d;
+    for (int32_t Y = 1895; Y <= 2005; ++Y)
+    {
+        if (Y == 1906)
+            Y = 1995;
+        int leap = (Y % 4 == 0) - (Y % 100 == 0) + (Y % 400 == 0);
+        for (uint32_t P = 1; P <= ppy; ++P)
+        {
+            int32_t Y2;
+            date_t d2;
+            uint32_t M, D;
+            check(de_pack_year_period_date(fr, Y, P, &d), DE_SUCCESS, file, line);
+            check(de_unpack_calendar_date(fr, d, &Y2, &M, &D), DE_SUCCESS, file, line);
+            if (Y != Y2 || M != (P - 1) * mpp + em || D != last_day_of_month[M] + (M == 2) * leap)
+                fail(file, line, "pack_yp unpack_calendar");
+            for (int mm = 0; mm < mpp; mm++)
+            {
+                int m2 = mpp * (P - 1) + em - mm;
+                Y2 = m2 < 1 ? Y - 1 : Y;
+                M = m2 < 1 ? 12 + m2 : m2;
+                int last_day = last_day_of_month[M] + (M == 2) * ((Y2 % 4 == 0) - (Y2 % 100 == 0) + (Y2 % 400 == 0));
+                for (D = 4; D <= last_day; D += 10)
+                {
+                    check(de_pack_calendar_date(fr, Y2, M, D, &d2), DE_SUCCESS, file, line);
+                    if (d != d2)
+                        fail(file, line, "pack_calendar unpack_yp");
+                }
+            }
+        }
+    }
 }
 
 int main(void)
@@ -710,6 +749,7 @@ int main(void)
     }
 
     CHECK_SUCCESS(de_close(de));
+    de = NULL;
 
     // Test dates packing and unpacking
     {
@@ -739,7 +779,6 @@ int main(void)
 
         /**********************************************************************/
         /* test de_{pack,unpack}_calendar_date */
-        /* these don't work with YP frequencies */
 
         for (D = 1; D <= 31; D++)
         {
@@ -792,6 +831,28 @@ int main(void)
             CHECK_SUCCESS(de_pack_calendar_date(fr, 2023, 8, 13, &d));
             CHECK_SUCCESS(de_unpack_calendar_date(fr, d, &Y, &M, &D));
             FAIL_IF(Y != 2023 || M != 8 || D != 13 + fr % 16, "weekly")
+        }
+
+        /* these now work with YP frequencies */
+        CHECK_YPP_PACK_UNPACK_CALENDAR(freq_monthly, 12, 1);
+        CHECK_YPP_PACK_UNPACK_CALENDAR(freq_monthly + 1, 12, 1);
+
+        CHECK_YPP_PACK_UNPACK_CALENDAR(freq_quarterly, 4, 3);
+        for (fr = freq_quarterly_jan; fr <= freq_quarterly_dec; ++fr)
+        {
+            CHECK_YPP_PACK_UNPACK_CALENDAR(fr, 4, 3);
+        }
+
+        CHECK_YPP_PACK_UNPACK_CALENDAR(freq_halfyearly, 2, 6);
+        for (fr = freq_halfyearly_jan; fr <= freq_halfyearly_dec; ++fr)
+        {
+            CHECK_YPP_PACK_UNPACK_CALENDAR(fr, 2, 6);
+        }
+
+        CHECK_YPP_PACK_UNPACK_CALENDAR(freq_yearly, 1, 12);
+        for (fr = freq_yearly_jan; fr <= freq_yearly_dec; ++fr)
+        {
+            CHECK_YPP_PACK_UNPACK_CALENDAR(fr, 1, 12);
         }
 
         /**********************************************************************/

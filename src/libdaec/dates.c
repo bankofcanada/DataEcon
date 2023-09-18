@@ -185,7 +185,7 @@ int _get_ppy(frequency_t freq, uint32_t *ppy)
         return DE_SUCCESS;
     }
     /* not a ppy frequency */
-    return error(DE_INTERNAL);
+    return error1(DE_INTERNAL, "_get_ppy called on date with non-YP frequency");
 }
 
 int _encode_ppy(frequency_t freq, int32_t year, uint32_t period, int32_t *N)
@@ -235,7 +235,7 @@ int _encode_calendar(frequency_t freq, int32_t year, uint32_t month, uint32_t da
         *N = _rata_die_to_septem(*N, freq % freq_weekly);
         return DE_SUCCESS;
     }
-    return error(DE_INTERNAL);
+    return error1(DE_INTERNAL, "_encode_calendar called with unsupported frequency");
 }
 
 int _encode_first_period(frequency_t freq, int32_t year, int32_t *N)
@@ -265,7 +265,7 @@ int _decode_calendar(frequency_t freq, int32_t N, int32_t *year, uint32_t *month
         N = _rata_die_from_septem(N, freq % freq_weekly);
     }
     else
-        return error(DE_INTERNAL);
+        return error1(DE_INTERNAL, "_decode_calendar called with unsupported frequency");
     const struct __internal_date d = _rata_die_to_date(N);
     *year = d.year;
     *month = d.month;
@@ -329,9 +329,9 @@ int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32
         uint32_t ppy;
         TRACE_RUN(_get_ppy(freq, &ppy));
         if (ppy > 12)
-            return error(DE_INTERNAL);
+            return error1(DE_INTERNAL, "ppy > 12 not supported in de_pack_calendar_date");
         const uint32_t X = freq % 16; /* end month of period in frequency*/
-        const uint32_t P = ((month - X) * ppy + 11) / 12 + 1;
+        const uint32_t P = ((month - X) * ppy + 11) / 12 + (X > 0);
         if (P > ppy)
         {
             TRACE_RUN(_encode_ppy(freq, year + 1, P - ppy, &N));
@@ -340,7 +340,6 @@ int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32
         {
             TRACE_RUN(_encode_ppy(freq, year, P, &N));
         }
-        return error(DE_INTERNAL);
     }
     else
     {
@@ -350,7 +349,7 @@ int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32
     return DE_SUCCESS;
 }
 
-uint32_t _day_in_month(int32_t Y, uint32_t M)
+uint32_t _days_in_month(int32_t Y, uint32_t M)
 {
     if (M == 2)
         return 28 + (Y % 4 == 0) - (Y % 100 == 0) + (Y % 400 == 0);
@@ -369,7 +368,7 @@ int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32
         uint32_t ppy;
         TRACE_RUN(_get_ppy(freq, &ppy));
         if (ppy > 12)
-            return error(DE_INTERNAL);
+            return error1(DE_INTERNAL, "ppy > 12 not supported in de_unpack_calendar_date");
         uint32_t P;
         int32_t Y;
         TRACE_RUN(_decode_ppy(freq, N, &Y, &P));
@@ -377,7 +376,7 @@ int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32
         const uint32_t M = (P - (X > 0)) * 12 / ppy + X;
         *year = Y;
         *month = M;
-        *day = _day_in_month(Y, M);
+        *day = _days_in_month(Y, M);
     }
     else
     {
