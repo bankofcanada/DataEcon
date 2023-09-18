@@ -118,8 +118,8 @@ extern "C"
     {
         obj_id_t id;
         obj_id_t pid;
-        class_t class;
-        type_t type;
+        class_t obj_class;
+        type_t obj_type;
         const char *name;
     } object_t;
 
@@ -254,7 +254,7 @@ extern "C"
     typedef struct
     {
         axis_id_t id;
-        axis_type_t type;
+        axis_type_t ax_type;
         int64_t length;
         frequency_t frequency;
         /* at most one of these is valid, depending on type */

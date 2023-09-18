@@ -55,8 +55,8 @@ typedef struct
 {
     obj_id_t id;
     obj_id_t pid;
-    class_t class;
-    type_t type;
+    class_t obj_class;
+    type_t obj_type;
     const char *name;
 } object_t;
 

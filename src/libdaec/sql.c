@@ -48,8 +48,8 @@ void _fill_object(sqlite3_stmt *stmt, object_t *object)
 {
     object->id = sqlite3_column_int64(stmt, 0);
     object->pid = sqlite3_column_int64(stmt, 1);
-    object->class = sqlite3_column_int(stmt, 2);
-    object->type = sqlite3_column_int(stmt, 3);
+    object->obj_class = sqlite3_column_int(stmt, 2);
+    object->obj_type = sqlite3_column_int(stmt, 3);
     object->name = (const char *)sqlite3_column_text(stmt, 4);
 }
 
@@ -299,10 +299,10 @@ int sql_load_axis(de_file de, axis_id_t id, axis_t *axis)
     {
     case SQLITE_ROW:
         axis->id = id;
-        axis->type = sqlite3_column_int(stmt, 1);
+        axis->ax_type = sqlite3_column_int(stmt, 1);
         axis->length = sqlite3_column_int64(stmt, 2);
         axis->frequency = sqlite3_column_int(stmt, 3);
-        switch (axis->type)
+        switch (axis->ax_type)
         {
         case axis_plain:
             axis->first = 0;
@@ -334,7 +334,7 @@ int sql_find_axis(de_file de, axis_t *axis)
         return trace_error();
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
-    CHECK_SQLITE(sqlite3_bind_int(stmt, 1, axis->type));
+    CHECK_SQLITE(sqlite3_bind_int(stmt, 1, axis->ax_type));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 2, axis->length));
     CHECK_SQLITE(sqlite3_bind_int(stmt, 3, axis->frequency));
     while (1)
@@ -342,7 +342,7 @@ int sql_find_axis(de_file de, axis_t *axis)
         switch (rc = sqlite3_step(stmt))
         {
         case SQLITE_ROW:
-            switch (axis->type)
+            switch (axis->ax_type)
             {
             case axis_plain:
                 axis->id = sqlite3_column_int64(stmt, 0);
@@ -380,10 +380,10 @@ int sql_new_axis(de_file de, axis_t *axis)
         return trace_error();
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
-    CHECK_SQLITE(sqlite3_bind_int(stmt, 1, axis->type));
+    CHECK_SQLITE(sqlite3_bind_int(stmt, 1, axis->ax_type));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 2, axis->length));
     CHECK_SQLITE(sqlite3_bind_int(stmt, 3, axis->frequency));
-    switch (axis->type)
+    switch (axis->ax_type)
     {
     case axis_plain:
         CHECK_SQLITE(sqlite3_bind_null(stmt, 4));

@@ -21,7 +21,7 @@ int de_axis_plain(de_file de, int64_t length, axis_id_t *id)
     if (de == NULL || id == NULL)
         return error(DE_NULL);
     axis_t axis;
-    axis.type = axis_plain;
+    axis.ax_type = axis_plain;
     axis.length = length;
     axis.frequency = freq_none;
     axis.first = 0;
@@ -36,7 +36,7 @@ int de_axis_range(de_file de, int64_t length, frequency_t frequency, int64_t fir
     if (de == NULL || id == NULL)
         return error(DE_NULL);
     axis_t axis;
-    axis.type = axis_range;
+    axis.ax_type = axis_range;
     axis.length = length;
     axis.frequency = frequency;
     axis.first = first;
@@ -51,7 +51,7 @@ int de_axis_names(de_file de, int64_t length, const char *names, axis_id_t *id)
     if (de == NULL || id == NULL)
         return error(DE_NULL);
     axis_t axis;
-    axis.type = axis_names;
+    axis.ax_type = axis_names;
     axis.length = length;
     axis.frequency = freq_none;
     axis.first = 0;

@@ -49,9 +49,9 @@ void check_scalar(scalar_t scalar, int64_t id, type_t type, frequency_t frequenc
 {
     if (scalar.object.id != id)
         fail(file, line, "Scalar id doesn't match.");
-    if (scalar.object.class != class_scalar)
+    if (scalar.object.obj_class != class_scalar)
         fail(file, line, "Scalar class doesn't match.");
-    if (scalar.object.type != type)
+    if (scalar.object.obj_type != type)
         fail(file, line, "Scalar type doesn't match.");
     if (scalar.frequency != frequency)
         fail(file, line, "Scalar frequency doesn't match.");
@@ -73,7 +73,7 @@ void check_axis(axis_t axis, axis_id_t id, axis_type_t type, int64_t length, fre
 {
     if (id >= 0 && id != axis.id)
         fail(file, line, "Axis id doesn't match");
-    if (axis.type != type)
+    if (axis.ax_type != type)
         fail(file, line, "Axis type doesn't match");
     if (axis.frequency != frequency)
         fail(file, line, "Axis frequency doesn't match");
@@ -94,9 +94,9 @@ void check_tseries(tseries_t tseries, obj_id_t id, type_t type, type_t eltype, a
 {
     if (tseries.object.id != id)
         fail(file, line, "tseries id doesn't match.");
-    if (tseries.object.class != class_tseries)
+    if (tseries.object.obj_class != class_tseries)
         fail(file, line, "tseries class doesn't match.");
-    if (tseries.object.type != type)
+    if (tseries.object.obj_type != type)
         fail(file, line, "tseries type doesn't match.");
     if (tseries.eltype != eltype)
         fail(file, line, "tseries eltype doesn't match.");
@@ -123,9 +123,9 @@ void check_mvtseries(mvtseries_t mvtseries, obj_id_t id, type_t type, type_t elt
 {
     if (mvtseries.object.id != id)
         fail(file, line, "mvtseries id doesn't match.");
-    if (mvtseries.object.class != class_mvtseries)
+    if (mvtseries.object.obj_class != class_mvtseries)
         fail(file, line, "mvtseries class doesn't match.");
-    if (mvtseries.object.type != type)
+    if (mvtseries.object.obj_type != type)
         fail(file, line, "mvtseries type doesn't match.");
     if (mvtseries.eltype != eltype)
         fail(file, line, "mvtseries eltype doesn't match.");
@@ -238,7 +238,7 @@ int main(void)
     CHECK(de_load_object(NULL, 0, &object), DE_NULL);
     CHECK(de_load_object(de, 0, NULL), DE_NULL);
     CHECK_SUCCESS(de_load_object(de, 0, &object));
-    FAIL_IF(object.id != 0 || object.pid != 0 || object.class != class_catalog || object.type != type_none || strcmp(object.name, "/") != 0, "")
+    FAIL_IF(object.id != 0 || object.pid != 0 || object.obj_class != class_catalog || object.obj_type != type_none || strcmp(object.name, "/") != 0, "")
 
     /* find object id from parent-id and name */
     int64_t id, id1;
@@ -363,7 +363,7 @@ int main(void)
         CHECK_SCALAR(scalar, id, type_date, freq_quarterly, &q2020Q1);
         // printf("Loaded scalar 'one':\n");
         // printf("    id=%ld, pid=%ld, class=%d, type=%d, name='%s', frequency=%d, nbytes=%ld, value=%p, *value=%g\n",
-        //     scalar.object.id, scalar.object.pid, scalar.object.class, scalar.object.type, scalar.object.name,
+        //     scalar.object.id, scalar.object.pid, scalar.objectobj_class, scalar.object.obj_type, scalar.object.name,
         //         scalar.frequency, scalar.nbytes,scalar.value, scalar.value ? *(double*)scalar.value : NAN);
     }
 
@@ -666,7 +666,7 @@ int main(void)
             CHECK_SUCCESS(de_search_catalog(de, 0, NULL, type_any, class, &search));
             while (DE_SUCCESS == (rc = de_next_object(search, &object)))
             {
-                FAIL_IF(object.class != class, "class does not match");
+                FAIL_IF(object.obj_class != class, "class does not match");
                 ++count;
             }
             FAIL_IF(count == 0, "Nothing found");
@@ -702,7 +702,7 @@ int main(void)
             CHECK_SUCCESS(de_search_catalog(de, 0, NULL, type_integer, class_any, &search));
             while (DE_SUCCESS == (rc = de_next_object(search, &object)))
             {
-                FAIL_IF(object.type != type_integer, "type filter didn't work");
+                FAIL_IF(object.obj_type != type_integer, "type filter didn't work");
                 ++count;
             }
             FAIL_IF(count == 0, "Nothing found");
@@ -714,7 +714,7 @@ int main(void)
             CHECK_SUCCESS(de_search_catalog(de, 0, "scal*", type_integer, class_any, &search));
             while (DE_SUCCESS == (rc = de_next_object(search, &object)))
             {
-                FAIL_IF(object.type != type_integer, "type filter didn't work");
+                FAIL_IF(object.obj_type != type_integer, "type filter didn't work");
                 ++count;
             }
             FAIL_IF(count == 0, "Nothing found");

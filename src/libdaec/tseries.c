@@ -42,7 +42,7 @@ int de_load_tseries(de_file de, obj_id_t id, tseries_t *tseries)
     if (de == NULL || tseries == NULL)
         return error(DE_NULL);
     TRACE_RUN(sql_load_object(de, id, &(tseries->object)));
-    if (tseries->object.class != class_tseries)
+    if (tseries->object.obj_class != class_tseries)
         return error(DE_BAD_CLASS);
     TRACE_RUN(sql_load_tseries_value(de, id, tseries));
     return DE_SUCCESS;

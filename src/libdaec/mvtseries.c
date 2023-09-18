@@ -38,7 +38,7 @@ int de_load_mvtseries(de_file de, obj_id_t id, mvtseries_t *mvtseries)
     if (de == NULL || mvtseries == NULL)
         return error(DE_NULL);
     TRACE_RUN(sql_load_object(de, id, &(mvtseries->object)));
-    if (mvtseries->object.class != class_mvtseries)
+    if (mvtseries->object.obj_class != class_mvtseries)
         return error(DE_BAD_CLASS);
     TRACE_RUN(sql_load_mvtseries_value(de, id, mvtseries));
     return DE_SUCCESS;

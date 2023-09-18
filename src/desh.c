@@ -417,7 +417,7 @@ void print_scalar(obj_id_t id)
         print_de_error();
         return;
     }
-    switch (scal.object.type)
+    switch (scal.object.obj_type)
     {
     case type_integer:
     {
@@ -485,7 +485,7 @@ void print_scalar(obj_id_t id)
     }
     default:
     {
-        print_error("Printing of scalar type %d not implemented.", scal.object.type);
+        print_error("Printing of scalar type %d not implemented.", scal.object.obj_type);
         break;
     }
     }
@@ -499,13 +499,13 @@ void print_object(obj_id_t id)
         print_de_error();
         return;
     }
-    switch (obj.class)
+    switch (obj.obj_class)
     {
     case class_scalar:
         print_scalar(obj.id);
         return;
     default:
-        print_error("Printing of class %d not implemented.", obj.class);
+        print_error("Printing of class %d not implemented.", obj.obj_class);
         return;
     }
 }

@@ -38,7 +38,7 @@ int de_load_scalar(de_file de, obj_id_t id, scalar_t *scalar)
     if (de == NULL || scalar == NULL)
         return error(DE_NULL);
     TRACE_RUN(sql_load_object(de, id, &(scalar->object)));
-    if (scalar->object.class != class_scalar)
+    if (scalar->object.obj_class != class_scalar)
         return error(DE_BAD_CLASS);
     TRACE_RUN(sql_load_scalar_value(de, id, scalar));
     return DE_SUCCESS;
