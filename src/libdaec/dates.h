@@ -36,9 +36,9 @@
 typedef enum
 {
     freq_none = 0,
-    freq_unit = 1,
-    freq_daily = 4,
-    freq_bdaily = 5,
+    freq_unit = 11,
+    freq_daily = 12,
+    freq_bdaily = 13,
     freq_weekly = 16,
     freq_weekly_sun0 = freq_weekly,
     freq_weekly_mon,

@@ -510,7 +510,7 @@ int main(void)
         /* plain range */
         CHECK_SUCCESS(de_axis_plain(de, 11, &ax));
         CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_integer, type_integer, ax, 0, NULL, &_id), DE_BAD_TYPE);
-        CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_tseries, type_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_tseries, type_none, ax, 0, NULL, &_id), DE_BAD_ELTYPE_NONE);
         CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_mvtseries, type_float, ax, 0, NULL, &_id), DE_BAD_TYPE);
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "rng_plain", type_range, type_none, ax, 0, NULL, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
@@ -521,6 +521,47 @@ int main(void)
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "rng_dates", type_range, type_none, ax, 0, NULL, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
         CHECK_TSERIES(ts, _id, type_range, type_none, ax, NULL);
+
+        date_t cvals[] = {11, 12, 13, 14, 15, 16, 17, 18};
+        CHECK_SUCCESS(de_axis_plain(de, sizeof cvals / sizeof cvals[0], &ax));
+        CHECK(de_store_tseries(de, id_tseries, "ts_date", type_vector, type_date, ax, sizeof cvals, cvals, &_id), DE_BAD_ELTYPE_DATE);
+        eltype_t et;
+        CHECK(de_pack_eltype(type_date, freq_none, NULL), DE_NULL);
+        CHECK(de_pack_eltype(type_date, freq_none, &et), DE_BAD_FREQ);
+        CHECK_SUCCESS(de_pack_eltype(type_date, freq_unit, &et));
+        CHECK_SUCCESS(de_store_tseries(de, id_tseries, "ts_date", type_vector, et, ax, sizeof cvals, cvals, &_id));
+        CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
+        CHECK_TSERIES(ts, _id, type_vector, et, ax, cvals);
+
+        CHECK(DE_NULL, de_pack_eltype(0,0,NULL));
+        CHECK(DE_NULL, de_unpack_eltype(0,NULL,NULL));
+        /* it is an error to provide a frequency for anything other than type_date */
+        CHECK(DE_BAD_FREQ, de_pack_eltype(type_integer, freq_unit, &et));
+        /* it is an error to not provide frequency for type_date */
+        CHECK(DE_BAD_FREQ, de_pack_eltype(type_date, freq_none, &et));
+
+        for (type_t tt = 0; tt <= type_other_scalar; ++tt)
+        {
+            if (tt == type_date)
+                continue;
+            CHECK_SUCCESS(de_pack_eltype(tt, type_none, &et));
+            FAIL_IF(tt != et, "bad pack eltype");
+            type_t t1;
+            frequency_t f1 ;
+            CHECK_SUCCESS(de_unpack_eltype(et, &t1, &f1)) ;
+            FAIL_IF(t1 != tt || f1 != freq_none, "bad unpack eltype");
+        }
+
+        for (frequency_t ff = freq_unit; ff <= freq_quarterly_dec; ++ff)
+        {
+            CHECK_SUCCESS(de_pack_eltype(type_date, ff, &et));
+            FAIL_IF(ff != et, "bad pack eltype");
+            type_t t1;
+            frequency_t f1 ;
+            CHECK_SUCCESS(de_unpack_eltype(et, &t1, &f1));
+            FAIL_IF(t1 != type_date || f1 != ff, "bad unpack eltype");
+        }
+
 
         double dvals[5] = {0.1, 0.2, 0.3, 0.4, 0.5};
         CHECK_SUCCESS(de_axis_plain(de, sizeof dvals / sizeof dvals[0], &ax));

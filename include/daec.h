@@ -40,6 +40,8 @@ extern "C"
         DE_BAD_AXIS_TYPE,     /* invalid axis type code */
         DE_BAD_CLASS,         /* class of object does not match */
         DE_BAD_TYPE,          /* type of object is not valid for its class */
+        DE_BAD_ELTYPE_DATE,   /* element type date should be specified with its frequency code */
+        DE_BAD_ELTYPE_NONE,   /* element type set to NONE for object type other than range */
         DE_BAD_NAME,          /* invalid object name */
         DE_BAD_FREQ,          /* bad frequency */
         DE_SHORT_BUF,         /* provided buffer is too short */
@@ -159,9 +161,9 @@ extern "C"
     typedef enum
     {
         freq_none = 0,
-        freq_unit = 1,
-        freq_daily = 4,
-        freq_bdaily = 5,
+        freq_unit = 11,
+        freq_daily = 12,
+        freq_bdaily = 13,
         freq_weekly = 16,
         freq_weekly_sun0 = freq_weekly,
         freq_weekly_mon,
@@ -272,10 +274,15 @@ extern "C"
 
     /* ***************************** tseries ************************************* */
 
+    typedef int eltype_t;
+
+    int de_pack_eltype(type_t type, frequency_t freq, eltype_t *eltype);
+    int de_unpack_eltype(eltype_t eltype, type_t *type, frequency_t *freq);
+
     typedef struct
     {
         object_t object;
-        type_t eltype;
+        eltype_t eltype;
         axis_t axis;
         int64_t nbytes;
         const void *value; /* we don't manage the memory for the value */

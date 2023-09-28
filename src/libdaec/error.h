@@ -26,10 +26,12 @@ enum
     DE_BAD_AXIS_TYPE,     /* invalid axis type code */
     DE_BAD_CLASS,         /* class of object does not match */
     DE_BAD_TYPE,          /* type of object is not valid for its class */
+    DE_BAD_ELTYPE_DATE,   /* element type date should be specified with its frequency code */
+    DE_BAD_ELTYPE_NONE,   /* element type set to NONE for object type other than range */
     DE_BAD_NAME,          /* invalid object name */
     DE_BAD_FREQ,          /* bad frequency */
     DE_SHORT_BUF,         /* provided buffer is too short */
-    DE_OBJ_DNE,           /* object does not exist */
+    DE_OBJ_DNE ,           /* object does not exist */
     DE_AXIS_DNE,          /* axis does not exist */
     DE_ARG,               /* invalid combination of arguments */
     DE_NO_OBJ,            /* no more objects in search list */

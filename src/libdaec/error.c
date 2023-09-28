@@ -131,6 +131,12 @@ int de_error(char *restrict msg, size_t len)
         case DE_BAD_TYPE:
             snprintf(msg, len, fmt, code, "type of object is not valid for its class");
             break;
+        case DE_BAD_ELTYPE_DATE:
+            snprintf(msg, len, fmt, code, "element type date should be specified with its frequency code");
+            break;
+        case DE_BAD_ELTYPE_NONE:
+            snprintf(msg, len, fmt, code, "element type set to NONE for object type other than range");
+            break;
         case DE_BAD_NAME:
             snprintf(msg, len, fmt1, code, "invalid object name", last_error.arg);
             break;
