@@ -1,341 +1,138 @@
 
-
+#include <cstdio>
 #include <string>
-#include <iostream>
-#include <fstream>
 #include <complex>
-#include <iomanip>
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>
 #endif
 
+#include "common.h"
+
 #include "daec.h"
 
 using namespace std;
 
-static std::ofstream D;
-static std::ofstream M;
-static de_file de;
+static std::FILE *D = NULL;
+static std::FILE *M = NULL;
+static de_file de = NULL;
 
 bool export_scalars = export_scalars;
 
 void print_usage(const char *program)
 {
-    std::cerr << "Usage: " << program << " infile.daec out.data.csv out.manifest.csv\n";
-    std::cerr << "    `outfile` should be just the basename of the output file.\n";
-    std::cerr << "    Two .csv file will be written - outfile.data.csv and outfile.manifest.csv.\n";
-    std::cerr << std::endl;
-}
-
-int print_de_error()
-{
-    char message[1024];
-    int rc = de_error(message, sizeof message);
-    std::cerr << message << std::endl;
-    return rc;
+    fprintf(stderr, "Usage: %s infile.daec out.data.csv out.manifest.csv\n", program);
+    fprintf(stderr, "    `outfile` should be just the basename of the output file.\n");
+    fprintf(stderr, "    Two .csv file will be written - outfile.data.csv and outfile.manifest.csv.\n");
+    fprintf(stderr, "\n");
+    fflush(stderr);
+    return;
 }
 
 void print_header()
 {
-    if (M.is_open())
+    if (M != NULL)
     {
-        M << "name,class,type,frequency" << '\n';
+        fprintf(M, "name,class,type,frequency\n");
     }
-    if (D.is_open())
+    if (D != NULL)
     {
-        D << "date,name,value" << '\n';
+        fprintf(D, "date,name,value\n");
     }
 }
 
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &out, const type_t obj_type)
+int get_object_name(const object_t &object, const char **obj_name)
 {
-    out << '"';
-    out << (obj_type == type_none ? "none" : obj_type == type_integer    ? "integer"
-                                         : obj_type == type_unsigned     ? "unsigned"
-                                         : obj_type == type_date         ? "date"
-                                         : obj_type == type_float        ? "float"
-                                         : obj_type == type_complex      ? "complex"
-                                         : obj_type == type_string       ? "string"
-                                         : obj_type == type_other_scalar ? "other_scalar"
-                                         : obj_type == type_vector       ? "vector"
-                                         : obj_type == type_range        ? "range"
-                                         : obj_type == type_tseries      ? "tseries"
-                                         : obj_type == type_other_1d     ? "other_1d"
-                                         : obj_type == type_matrix       ? "matrix"
-                                         : obj_type == type_mvtseries    ? "mvtseries"
-                                         : obj_type == type_other_2d     ? "other_2d"
-                                         : obj_type == type_any          ? "any"
-                                                                         : "unknown");
-    return out;
-}
-
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &out, const class_t obj_class)
-{
-    out << '"';
-    switch (obj_class)
+    if (object.pid == 0)
     {
-    case class_catalog:
-        out << "catalog";
-        break;
-    case class_scalar:
-        out << "scalar";
-        break;
-    case class_tseries:
-        out << "tseries";
-        break;
-    case class_mvtseries:
-        out << "mvtseries";
-        break;
-    default:
-        out << "class " << obj_class;
-    }
-    return out << '"';
-}
-
-std::basic_ostream<char> &operator<<(std::basic_ostream<char> &out, const frequency_t freq)
-{
-    out << '"';
-    out << (freq == freq_none ? "none" : freq == freq_unit         ? "unit"
-                                     : freq == freq_daily          ? "daily"
-                                     : freq == freq_bdaily         ? "bdaily"
-                                     : freq == freq_weekly         ? "weekly"
-                                     : freq == freq_weekly_sun0    ? "weekly_sun0"
-                                     : freq == freq_weekly_mon     ? "weekly_mon"
-                                     : freq == freq_weekly_tue     ? "weekly_tue"
-                                     : freq == freq_weekly_wed     ? "weekly_wed"
-                                     : freq == freq_weekly_thu     ? "weekly_thu"
-                                     : freq == freq_weekly_fri     ? "weekly_fri"
-                                     : freq == freq_weekly_sat     ? "weekly_sat"
-                                     : freq == freq_weekly_sun7    ? "weekly_sun7"
-                                     : freq == freq_weekly_sun     ? "weekly_sun"
-                                     : freq == freq_monthly        ? "monthly"
-                                     : freq == freq_quarterly      ? "quarterly"
-                                     : freq == freq_quarterly_jan  ? "quarterly_jan"
-                                     : freq == freq_quarterly_feb  ? "quarterly_feb"
-                                     : freq == freq_quarterly_mar  ? "quarterly_mar"
-                                     : freq == freq_quarterly_apr  ? "quarterly_apr"
-                                     : freq == freq_quarterly_may  ? "quarterly_may"
-                                     : freq == freq_quarterly_jun  ? "quarterly_jun"
-                                     : freq == freq_quarterly_jul  ? "quarterly_jul"
-                                     : freq == freq_quarterly_aug  ? "quarterly_aug"
-                                     : freq == freq_quarterly_sep  ? "quarterly_sep"
-                                     : freq == freq_quarterly_oct  ? "quarterly_oct"
-                                     : freq == freq_quarterly_nov  ? "quarterly_nov"
-                                     : freq == freq_quarterly_dec  ? "quarterly_dec"
-                                     : freq == freq_halfyearly     ? "halfyearly"
-                                     : freq == freq_halfyearly_jan ? "halfyearly_jan"
-                                     : freq == freq_halfyearly_feb ? "halfyearly_feb"
-                                     : freq == freq_halfyearly_mar ? "halfyearly_mar"
-                                     : freq == freq_halfyearly_apr ? "halfyearly_apr"
-                                     : freq == freq_halfyearly_may ? "halfyearly_may"
-                                     : freq == freq_halfyearly_jun ? "halfyearly_jun"
-                                     : freq == freq_halfyearly_jul ? "halfyearly_jul"
-                                     : freq == freq_halfyearly_aug ? "halfyearly_aug"
-                                     : freq == freq_halfyearly_sep ? "halfyearly_sep"
-                                     : freq == freq_halfyearly_oct ? "halfyearly_oct"
-                                     : freq == freq_halfyearly_nov ? "halfyearly_nov"
-                                     : freq == freq_halfyearly_dec ? "halfyearly_dec"
-                                     : freq == freq_yearly         ? "yearly"
-                                     : freq == freq_yearly_jan     ? "yearly_jan"
-                                     : freq == freq_yearly_feb     ? "yearly_feb"
-                                     : freq == freq_yearly_mar     ? "yearly_mar"
-                                     : freq == freq_yearly_apr     ? "yearly_apr"
-                                     : freq == freq_yearly_may     ? "yearly_may"
-                                     : freq == freq_yearly_jun     ? "yearly_jun"
-                                     : freq == freq_yearly_jul     ? "yearly_jul"
-                                     : freq == freq_yearly_aug     ? "yearly_aug"
-                                     : freq == freq_yearly_sep     ? "yearly_sep"
-                                     : freq == freq_yearly_oct     ? "yearly_oct"
-                                     : freq == freq_yearly_nov     ? "yearly_nov"
-                                     : freq == freq_yearly_dec     ? "yearly_dec"
-                                                                   : "unknown");
-    return out << '"';
-}
-
-int print_value(type_t obj_type, int64_t nbytes, const void *value, int i)
-{
-    switch (obj_type)
-    {
-    case type_integer:
-    {
-        if (nbytes == 1)
-            D << reinterpret_cast<const int8_t *>(value)[i];
-        else if (nbytes == 2)
-            D << reinterpret_cast<const int16_t *>(value)[i];
-        else if (nbytes == 4)
-            D << reinterpret_cast<const int32_t *>(value)[i];
-        else if (nbytes == 8)
-            D << reinterpret_cast<const int64_t *>(value)[i];
-        else
-        {
-            fprintf(stderr, "type_integer with unexpected nbytes = %ld", nbytes);
-            D << reinterpret_cast<const int64_t *>(value)[i];
-        }
-        break;
-    }
-    case type_unsigned:
-    {
-        if (nbytes == 1)
-            D << reinterpret_cast<const uint8_t *>(value)[i];
-        else if (nbytes == 2)
-            D << reinterpret_cast<const uint16_t *>(value)[i];
-        else if (nbytes == 4)
-            D << reinterpret_cast<const uint32_t *>(value)[i];
-        else if (nbytes == 8)
-            D << reinterpret_cast<const uint64_t *>(value)[i];
-        else
-        {
-            fprintf(stderr, "type_unsigned with unexpected nbytes = %ld", nbytes);
-            D << reinterpret_cast<const uint64_t *>(value)[i];
-        }
-        break;
-    }
-    case type_float:
-    {
-        D << std::setprecision(15);
-        if (nbytes == 4)
-            D << reinterpret_cast<const float *>(value)[i];
-        else if (nbytes == 8)
-            D << reinterpret_cast<const double *>(value)[i];
-        else
-        {
-            fprintf(stderr, "type_float with unexpected nbytes = %ld", nbytes);
-            D << reinterpret_cast<const long double *>(value)[i];
-        }
-        break;
-    }
-    case type_string:
-    {
-        if (i != 0)
-        {
-            fprintf(stderr, "Can't print series of string yet");
-            return -1;
-        }
-        std::string s(reinterpret_cast<const char *>(value));
-        D << '"' << s << '"';
-        break;
-    }
-    default:
-    {
-        fprintf(stderr, "can't print value of scalar type %d", obj_type);
-    }
-    }
-    return 0;
-}
-
-int export_scalar(const object_t &obj)
-{
-    scalar_t scal;
-    int rc = de_load_scalar(de, obj.id, &scal);
-    if (rc != DE_SUCCESS)
-    {
-        return print_de_error();
-    }
-
-    const char *oname;
-    if (obj.pid == 0)
-    {
-        oname = obj.name;
+        *obj_name = object.name;
+        return DE_SUCCESS;
     }
     else
-    {
-        rc = de_get_object_info(de, obj.id, &oname, NULL, NULL);
-        if (rc != DE_SUCCESS)
-        {
-            print_de_error();
-            return rc;
-        }
-    }
-
-    std::string name(oname);
-
-    if (M.is_open())
-    {
-        M << '"' << name << '"' << ','
-          << obj.obj_class << ','
-          << obj.obj_type << ','
-          << scal.frequency << '\n';
-    }
-    if (D.is_open())
-    {
-        D << '"' << "N/A" << '"' << ',' << '"' << name << '"' << ',';
-        print_value(scal.object.obj_type, scal.nbytes, scal.value, 0);
-        D << '\n';
-    }
-    return 0;
+        return de_get_object_info(de, object.id, obj_name, NULL, NULL);
 }
 
-int print_date(frequency_t freq, date_t date)
+int export_scalar(const object_t &object)
 {
-    int32_t year;
-    uint32_t month, day;
-    if (de_unpack_calendar_date(freq, date, &year, &month, &day) != DE_SUCCESS)
-    {
-        return print_de_error();
-    }
-    D << year << '-' << month << '-' << day;
-    return 0;
-}
-
-int print_series_row(const tseries_t &ser, const std::string &name)
-{
-    frequency_t freq = ser.axis.frequency;
-    date_t date = ser.axis.first;
-    int64_t nbytes = ser.nbytes / ser.axis.length;
-    for (auto i = 0; i < ser.axis.length; ++i)
-    {
-        D << '"';
-        if (print_date(freq, date + i) != 0)
-        {
-            return -1;
-        };
-        D << '"' << ',' << '"' << name << '"' << ',';
-        if (print_value(ser.eltype, nbytes, ser.value, i) != 0)
-        {
-            return -1;
-        };
-        D << '\n';
-    }
-    return 0;
-}
-
-int export_series(const object_t &obj)
-{
-    tseries_t ser;
-    int rc = de_load_tseries(de, obj.id, &ser);
+    scalar_t scalar;
+    int rc = de_load_scalar(de, object.id, &scalar);
     if (rc != DE_SUCCESS)
     {
-        return print_de_error();
+        print_de_error();
+        return rc;
     }
 
-    const char *oname;
-    if (obj.pid == 0)
+    const char *obj_name;
+    rc = get_object_name(object, &obj_name);
+    if (rc != DE_SUCCESS)
     {
-        oname = obj.name;
+        print_de_error();
+        return rc;
     }
-    else
+
+    if (M != NULL)
     {
-        rc = de_get_object_info(de, obj.id, &oname, NULL, NULL);
-        if (rc != DE_SUCCESS)
+        fprintf(M, "\"%s\",%s,%s,%s\n", obj_name,
+                _find_class_text(object.obj_class),
+                _find_type_text(object.obj_type),
+                _find_frequency_text(scalar.frequency));
+    }
+
+    if (D != NULL)
+    {
+        fprintf(D, "\"N/A\",\"%s\",", obj_name);
+        print_value(D, object.obj_type, scalar.frequency, scalar.nbytes, scalar.value);
+        fprintf(D, "\n");
+    }
+    return 0;
+}
+
+int export_series(const object_t &object)
+{
+    tseries_t tseries;
+    int rc = de_load_tseries(de, object.id, &tseries);
+    if (rc != DE_SUCCESS)
+    {
+        print_de_error();
+        return rc;
+    }
+
+    const char *obj_name;
+    rc = get_object_name(object, &obj_name);
+    if (rc != DE_SUCCESS)
+    {
+        print_de_error();
+        return rc;
+    }
+
+    std::string name(obj_name);
+
+    if (M != NULL)
+    {
+        fprintf(M, "\"%s\",%s,%s,%s\n", obj_name,
+                _find_class_text(object.obj_class),
+                _find_type_text(object.obj_type),
+                _find_frequency_text(tseries.axis.frequency));
+    }
+
+    if (D != NULL)
+    {
+        frequency_t freq = tseries.axis.frequency;
+        date_t first_date = tseries.axis.first;
+        int64_t elbytes = tseries.nbytes / tseries.axis.length;
+        type_t eltype;
+        frequency_t elfreq;
+        const int8_t * valptr = (const int8_t *)tseries.value;
+        (void)de_unpack_eltype(tseries.eltype, &eltype, &elfreq);
+        for (auto i = 0; i < tseries.axis.length; ++i)
         {
-            print_de_error();
-            return rc;
+            date_t date = first_date + i;
+            fprintf(D, "\"");
+            print_date(D, freq, sizeof date, &date);
+            fprintf(D, "\",\"%s\",", obj_name);
+            print_value(D, eltype, elfreq, elbytes, valptr + elbytes * i);
+            fprintf(D, "\n");
         }
-    }
-
-    std::string name(oname);
-
-    if (M.is_open())
-    {
-        M << '"' << name << '"' << ','
-          << obj.obj_class << ','
-          << obj.obj_type << ','
-          << ser.axis.frequency << '\n';
-    }
-    if (D.is_open())
-    {
-        return print_series_row(ser, oname);
     }
     return 0;
 }
@@ -343,70 +140,61 @@ int export_series(const object_t &obj)
 int export_catalog(obj_id_t pid)
 {
     int rc;
-    object_t obj;
+    object_t object;
     de_search search;
-    if (export_scalars)
+    rc = de_list_catalog(de, pid, &search);
+    if (rc != DE_SUCCESS)
     {
-        if (de_search_catalog(de, pid, NULL, type_any, class_scalar, &search) != DE_SUCCESS)
-        {
-            return print_de_error();
-        }
-        rc = de_next_object(search, &obj);
-        while (rc == DE_SUCCESS)
-        {
-            rc = export_scalar(obj);
-            if (rc != 0)
-                return rc;
-            rc = de_next_object(search, &obj);
-        }
-        if (rc != DE_NO_OBJ)
-        {
-            return print_de_error();
-        }
+        print_de_error();
+        return rc;
     }
-    /* now repeat for tseries */
-    if (de_search_catalog(de, pid, NULL, type_any, class_tseries, &search) != DE_SUCCESS)
-    {
-        return print_de_error();
-    }
-    rc = de_next_object(search, &obj);
+    rc = de_next_object(search, &object);
     while (rc == DE_SUCCESS)
     {
-        rc = export_series(obj);
-        if (rc != 0)
-            return rc;
-        rc = de_next_object(search, &obj);
+        switch (object.obj_class)
+        {
+        case class_catalog:
+            (void)export_catalog(object.id);
+            break;
+        case class_scalar:
+            (void)export_scalar(object);
+            break;
+        case class_tseries:
+            (void)export_series(object);
+            break;
+        default:
+            print_error("Cannot process object class %s(%d)", _find_class_text(object.obj_class), object.obj_class);
+        }
+        rc = de_next_object(search, &object);
     }
     if (rc != DE_NO_OBJ)
     {
-        return print_de_error();
+        print_de_error();
     }
-    /* now do any catalogs recursively */
-    if (de_search_catalog(de, pid, NULL, type_any, class_catalog, &search) != DE_SUCCESS)
+    rc = de_finalize_search(search);
+    if (rc != DE_SUCCESS)
     {
-        return print_de_error();
+        print_de_error();
     }
-    rc = de_next_object(search, &obj);
-    while (rc == DE_SUCCESS)
-    {
-        rc = export_catalog(obj.id);
-        if (rc != 0)
-            return rc;
-        rc = de_next_object(search, &obj);
-    }
-    if (rc != DE_NO_OBJ)
-    {
-        return print_de_error();
-    }
-    return 0;
+    return rc;
 }
 
 void close_all()
 {
-    if (M.is_open())
-        M.close();
-    if (D.is_open())
-        D.close();
+    if (M != NULL)
+    {
+        fclose(M);
+        M = NULL;
+    }
+    if (D != NULL)
+    {
+        fclose(D);
+        D = NULL;
+    }
+    if (de != NULL)
+    {
+        de_close(de);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -419,26 +207,36 @@ int main(int argc, char *argv[])
 
     if (de_open_readonly(argv[1], &de) != DE_SUCCESS)
     {
-        return print_de_error();
+        print_de_error();
+        return EXIT_FAILURE;
     }
 
     if (argc >= 2)
     {
-        D.open(argv[2], std::ios::out | std::ios::trunc);
+        D = fopen(argv[2], "w");
+        if (D == NULL)
+        {
+            print_error("Failed to open file %s", argv[2]);
+            close_all();
+            return EXIT_FAILURE;
+        }
         if (argc > 2)
         {
-            M.open(argv[3], std::ios::out | std::ios::trunc);
+            M = fopen(argv[3], "w");
+            if (M == NULL)
+            {
+                print_error("Failed to open file %s", argv[3]);
+                close_all();
+                return EXIT_FAILURE;
+            }
         }
     }
 
+    set_date_fmt(date_fmt_ymd);
+
     print_header();
+    auto rc = export_catalog(0);
+    close_all();
 
-    int rc = export_catalog(0);
-
-    if (D.is_open())
-        D.close();
-    if (M.is_open())
-        M.close();
-
-    return rc;
+    return rc == DE_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
 }

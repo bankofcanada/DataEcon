@@ -22,6 +22,8 @@ void add_history(char *command) {}
 #include "daec.h"
 #define DESH_VERSION "0.1"
 
+#include "common.h"
+
 char *strip(char *line);
 char *repl_read_command();
 void repl_execute(char *command);
@@ -34,22 +36,6 @@ void print_version(FILE *F)
 const char *desh_prompt = "desh> ";
 
 static de_file workdb = NULL;
-
-void print_error(const char *message, ...)
-{
-    va_list args;
-    va_start(args, message);
-    fprintf(stderr, "ERROR: ");
-    vfprintf(stderr, message, args);
-    fprintf(stderr, "\n");
-    va_end(args);
-}
-void print_de_error()
-{
-    static char message[1024];
-    de_error(message, sizeof message - 1);
-    print_error(message);
-}
 
 void signal_int_handler(int signal)
 {
@@ -146,136 +132,6 @@ char *repl_read_command()
  * TODO: this is very primitive parsing and interpreting of user input.
  *       we need a proper parser and interpreter for this repl.
  ****************************************************************************/
-
-struct frequencies_map
-{
-    frequency_t freq_code;
-    const char *freq_name;
-};
-
-struct frequencies_map FREQUENCIES_MAP[] = {
-    {freq_daily, "daily"},
-    {freq_bdaily, "bdaily"},
-    {freq_weekly, "weekly"},
-    {freq_weekly_mon, "weekly_mon"},
-    {freq_weekly_tue, "weekly_tue"},
-    {freq_weekly_wed, "weekly_wed"},
-    {freq_weekly_thu, "weekly_thu"},
-    {freq_weekly_fri, "weekly_fri"},
-    {freq_weekly_sat, "weekly_sat"},
-    {freq_weekly_sun, "weekly_sun"},
-    {freq_monthly, "monthly"},
-    {freq_quarterly, "quarterly"},
-    {freq_quarterly_jan, "quarterly_jan"},
-    {freq_quarterly_feb, "quarterly_feb"},
-    {freq_quarterly_mar, "quarterly_mar"},
-    {freq_quarterly_apr, "quarterly_apr"},
-    {freq_quarterly_may, "quarterly_may"},
-    {freq_quarterly_jun, "quarterly_jun"},
-    {freq_quarterly_jul, "quarterly_jul"},
-    {freq_quarterly_aug, "quarterly_aug"},
-    {freq_quarterly_sep, "quarterly_sep"},
-    {freq_quarterly_oct, "quarterly_oct"},
-    {freq_quarterly_nov, "quarterly_nov"},
-    {freq_quarterly_dec, "quarterly_dec"},
-    {freq_halfyearly, "halfyearly"},
-    {freq_halfyearly_jan, "halfyearly_jan"},
-    {freq_halfyearly_feb, "halfyearly_feb"},
-    {freq_halfyearly_mar, "halfyearly_mar"},
-    {freq_halfyearly_apr, "halfyearly_apr"},
-    {freq_halfyearly_may, "halfyearly_may"},
-    {freq_halfyearly_jun, "halfyearly_jun"},
-    {freq_halfyearly_jul, "halfyearly_jul"},
-    {freq_halfyearly_aug, "halfyearly_aug"},
-    {freq_halfyearly_sep, "halfyearly_sep"},
-    {freq_halfyearly_oct, "halfyearly_oct"},
-    {freq_halfyearly_nov, "halfyearly_nov"},
-    {freq_halfyearly_dec, "halfyearly_dec"},
-    {freq_yearly, "yearly"},
-    {freq_yearly_jan, "yearly_jan"},
-    {freq_yearly_feb, "yearly_feb"},
-    {freq_yearly_mar, "yearly_mar"},
-    {freq_yearly_apr, "yearly_apr"},
-    {freq_yearly_may, "yearly_may"},
-    {freq_yearly_jun, "yearly_jun"},
-    {freq_yearly_jul, "yearly_jul"},
-    {freq_yearly_aug, "yearly_aug"},
-    {freq_yearly_sep, "yearly_sep"},
-    {freq_yearly_oct, "yearly_oct"},
-    {freq_yearly_nov, "yearly_nov"},
-    {freq_yearly_dec, "yearly_dec"},
-    {-1, NULL}};
-
-int _find_frequency_code(const char *text)
-{
-    int i = 0;
-    while (true)
-    {
-        struct frequencies_map *F = &FREQUENCIES_MAP[i];
-        if (F->freq_name == NULL || strcmp(text, F->freq_name) == 0)
-            return F->freq_code;
-        i += 1;
-    }
-}
-const char *_find_frequency_text(frequency_t freq)
-{
-    int i = 0;
-    while (true)
-    {
-        struct frequencies_map *F = &FREQUENCIES_MAP[i];
-        if (F->freq_code == -1 || F->freq_code == freq)
-            return F->freq_name;
-        i += 1;
-    }
-}
-
-struct types_map
-{
-    type_t type_code;
-    const char *type_name;
-};
-struct types_map TYPES_MAP[] = {
-    {type_none, "none"},
-    {type_integer, "integer"},
-    {type_signed, "signed"},
-    {type_unsigned, "unsigned"},
-    {type_date, "date"},
-    {type_float, "float"},
-    {type_complex, "complex"},
-    {type_string, "string"},
-    {type_other_scalar, "other_scalar"},
-    {type_vector, "vector"},
-    {type_range, "range"},
-    {type_tseries, "tseries"},
-    {type_other_1d, "other_1d"},
-    {type_matrix, "matrix"},
-    {type_mvtseries, "mvtseries"},
-    {type_other_2d, "other_2d"},
-    {type_any, "any"},
-    {-1, NULL}};
-
-int _find_type_code(const char *text)
-{
-    int i = 0;
-    while (true)
-    {
-        struct types_map *T = &TYPES_MAP[i];
-        if (T->type_name == NULL || strcmp(text, T->type_name) == 0)
-            return T->type_code;
-        i += 1;
-    }
-}
-const char *_find_type_text(type_t type)
-{
-    int i = 0;
-    while (true)
-    {
-        struct types_map *T = &TYPES_MAP[i];
-        if (T->type_code == -1 || T->type_code == type)
-            return T->type_name;
-        i += 1;
-    }
-}
 
 void new_scalar(void)
 {
@@ -410,86 +266,16 @@ void new_scalar(void)
 
 void print_scalar(obj_id_t id)
 {
-    scalar_t scal;
-    int rc = de_load_scalar(workdb, id, &scal);
+    scalar_t scalar;
+    int rc = de_load_scalar(workdb, id, &scalar);
     if (rc != DE_SUCCESS)
     {
         print_de_error();
         return;
     }
-    switch (scal.object.obj_type)
-    {
-    case type_integer:
-    {
-        if (scal.nbytes == 8)
-            fprintf(stdout, "%ld", *(int64_t *)scal.value);
-        else if (scal.nbytes == 4)
-            fprintf(stdout, "%d", *(int32_t *)scal.value);
-        else if (scal.nbytes == 2)
-            fprintf(stdout, "%hd", *(int16_t *)scal.value);
-        else if (scal.nbytes == 1)
-            fprintf(stdout, "%hhd", *(int8_t *)scal.value);
-        else
-            fprintf(stdout, "%d", *(int *)scal.value);
-        break;
-    }
-    case type_unsigned:
-    {
-        if (scal.nbytes == 8)
-            fprintf(stdout, "%ld", *(uint64_t *)scal.value);
-        else if (scal.nbytes == 4)
-            fprintf(stdout, "%d", *(uint32_t *)scal.value);
-        else if (scal.nbytes == 2)
-            fprintf(stdout, "%hd", *(uint16_t *)scal.value);
-        else if (scal.nbytes == 1)
-            fprintf(stdout, "%hhd", *(uint8_t *)scal.value);
-        else
-            fprintf(stdout, "%d", *(unsigned *)scal.value);
-        break;
-    }
-    case type_float:
-    {
-        if (scal.nbytes == 8)
-            fprintf(stdout, "%lg", *(double *)scal.value);
-        else if (scal.nbytes == 4)
-            fprintf(stdout, "%g", *(float *)scal.value);
-        else
-            fprintf(stdout, "%lg", *(double *)scal.value);
-        break;
-    }
-    case type_date:
-    {
-        if (scal.frequency == freq_daily || scal.frequency == freq_bdaily || (scal.frequency & freq_weekly) != 0)
-        {
-            int32_t Y;
-            uint32_t M, D;
-            if (DE_SUCCESS != de_unpack_calendar_date(scal.frequency, *(date_t *)scal.value, &Y, &M, &D))
-            {
-                print_de_error();
-                return;
-            }
-            fprintf(stdout, "%s %d-%02u-%02u", _find_frequency_text(scal.frequency), Y, M, D);
-        }
-        else
-        {
-            int32_t Y;
-            uint32_t P;
-            if (DE_SUCCESS != de_unpack_year_period_date(scal.frequency, *(date_t *)scal.value, &Y, &P))
-            {
-                print_de_error();
-                return;
-            }
-            fprintf(stdout, "%s %d-%02u", _find_frequency_text(scal.frequency), Y, P);
-        }
-        break;
-    }
-    default:
-    {
-        print_error("Printing of scalar type %d not implemented.", scal.object.obj_type);
-        break;
-    }
-    }
+    print_value(stdout, scalar.object.obj_type, scalar.frequency, scalar.nbytes, scalar.value);
 }
+
 void print_object(obj_id_t id)
 {
     object_t obj;
