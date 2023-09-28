@@ -6,16 +6,22 @@ COVDIR = $(CACHEDIR)/cov
 PROFDIR = $(CACHEDIR)/prof
 
 # search path for targets and prereqs
-VPATH = src src/libdaec src/sqlite3
+VPATH = include src src/libdaec src/sqlite3 src/utils
 
 # vpath %.h src/libdaec src/sqlite3
 # vpath %.c src/libdaec src/sqlite3
 # vpath %.o src/libdaec src/sqlite3
 
+# for C
 CFLAGS = -std=c99 -O3 -Wall -Wpedantic -fPIC
 # CFLAGS = -std=c99 -O0 -g -Wall -Wpedantic -fPIC
+
+# for C++
+CXXFLAGS = -std=c++11 -O3 -Wall -Wpedantic -fPIC
+# CXXFLAGS = -std=c++11 -O0 -g -Wall -Wpedantic -fPIC
+
 # add include directories from VPATH
-CFLAGS += $(patsubst %,-I%,$(VPATH))
+CPPFLAGS = $(patsubst %,-I%,$(VPATH))
 
 CFLAGS_COV = -fprofile-arcs -fprofile-abs-path -ftest-coverage 
 CFLAGS_PROF = -pg -O0 -g
@@ -76,7 +82,7 @@ LIBDEPROF_SRC_O = $(patsubst %.c,$(PROFDIR)/%.o,$(notdir $(LIBDE_SRC_C)))
 # for our shell executable (for now just an example how to use our library)
 DESH = bin/desh
 # DESH_SRC_H = daec.h $(wildcard src/*.h)
-DESH_SRC_C = src/desh.c
+DESH_SRC_C = src/utils/desh.c
 DESH_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(DESH_SRC_C)))
 DESH_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
 ifeq ($(HAVE_READLINE),yes)
@@ -89,13 +95,16 @@ ifeq ($(HAVE_ZLIB),yes)
 endif
 
 DAEC2CSV = bin/daec2csv
-DAEC2CSV_SRC_CC = src/daec2csv.cc
+DAEC2CSV_SRC_CC = src/utils/daec2csv.cc
 DAEC2CSV_SRC_O =  $(patsubst %.cc,$(CACHEDIR)/%.o,$(notdir $(DAEC2CSV_SRC_CC)))
 DAEC2CSV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
 ifeq ($(HAVE_ZLIB),yes)
 	DAEC2CSV_CFLAGS += -DHAVE_ZLIB
 	DAEC2CSV_LDFLAGS += -lz
 endif
+
+UTILS_COMMON_C = src/utils/common.c
+UTILS_COMMON_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(UTILS_COMMON_C)))
 
 PROF = bin/prof
 # PROF_SRC_H = daec.h 
@@ -195,7 +204,7 @@ $(DESH_SRC_O) : $(DESH_SRC_C) | $(CACHEDIR)
 	$(COMPILE.c) $(DESH_CFLAGS) $(OUTPUT_OPTION) $<
 
 # link shell to our library (example)
-$(DESH): $(DESH_SRC_O) | $(LIBDE) bin
+$(DESH): $(DESH_SRC_O) $(UTILS_COMMON_O) | $(LIBDE) bin
 	$(LINK.c) $^ -o $@ $(DESH_LDFLAGS)
 
 # compile daec2csv 
@@ -203,7 +212,7 @@ $(DAEC2CSV_SRC_O) : $(DAEC2CSV_SRC_CC) | $(CACHEDIR)
 	$(COMPILE.cc) $(DAEC2CSV_CFLAGS) $(OUTPUT_OPTION) $<
 
 # link daec2csv
-$(DAEC2CSV): $(DAEC2CSV_SRC_O) | $(LIBDE) bin
+$(DAEC2CSV): $(DAEC2CSV_SRC_O) $(UTILS_COMMON_O) | $(LIBDE) bin
 	$(LINK.cc) $^ -o $@ $(DAEC2CSV_LDFLAGS)
 
 # link profiling executable
