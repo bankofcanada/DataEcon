@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "config.h"
 #include "misc.h"
@@ -26,14 +27,14 @@ bool _isfile(const char *path)
 const char *_id2str(int64_t id)
 {
     static char buffer[100];
-    snprintf(buffer, 100, "id=%lld", (long long)id);
+    snprintf(buffer, 100, "id=%" PRId64, id);
     return buffer;
 }
 
 const char *_pidnm2str(int64_t pid, const char *name)
 {
     static char buffer[100];
-    snprintf(buffer, 100, "pid=%lld,name='%s'", (long long)pid, name);
+    snprintf(buffer, 100, "pid=%" PRId64 ",name='%s'", pid, name);
     return buffer;
 }
 

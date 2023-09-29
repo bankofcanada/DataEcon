@@ -91,8 +91,8 @@ ifeq ($(HAVE_ZLIB),yes)
 endif
 
 DAEC2CSV = bin/daec2csv
-DAEC2CSV_SRC_CC = src/utils/daec2csv.cc
-DAEC2CSV_SRC_O =  $(patsubst %.cc,$(CACHEDIR)/%.o,$(notdir $(DAEC2CSV_SRC_CC)))
+DAEC2CSV_SRC_C = src/utils/daec2csv.c
+DAEC2CSV_SRC_O =  $(patsubst %.cc,$(CACHEDIR)/%.o,$(notdir $(DAEC2CSV_SRC_C)))
 DAEC2CSV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L lib -ldaec
 ifeq ($(HAVE_ZLIB),yes)
 	DAEC2CSV_CFLAGS += -DHAVE_ZLIB
@@ -208,12 +208,12 @@ $(DESH): $(DESH_SRC_O) $(UTILS_COMMON_O) | $(LIBDE) bin
 	$(LINK.c) $^ -o $@ $(DESH_LDFLAGS)
 
 # compile daec2csv 
-$(DAEC2CSV_SRC_O) : $(DAEC2CSV_SRC_CC) | $(CACHEDIR)
-	$(COMPILE.cc) $(DAEC2CSV_CFLAGS) $(OUTPUT_OPTION) $<
+$(DAEC2CSV_SRC_O) : $(DAEC2CSV_SRC_C) | $(CACHEDIR)
+	$(COMPILE.c) $(DAEC2CSV_CFLAGS) $(OUTPUT_OPTION) $<
 
 # link daec2csv
 $(DAEC2CSV): $(DAEC2CSV_SRC_O) $(UTILS_COMMON_O) | $(LIBDE) bin
-	$(LINK.cc) $^ -o $@ $(DAEC2CSV_LDFLAGS)
+	$(LINK.c) $^ -o $@ $(DAEC2CSV_LDFLAGS)
 
 # link profiling executable
 $(PROF): $(PROF_SRC_O) $(LIBDEPROF_SRC_O) $(CACHEDIR)/sqlite3.o | bin

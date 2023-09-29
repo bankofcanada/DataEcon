@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "common.h"
 
@@ -228,15 +229,15 @@ int snprintf_integer(char *restrict buffer, size_t bufsz, int64_t nbytes, const 
     switch (nbytes)
     {
     case 8:
-        return snprintf(buffer, bufsz, "%ld", *(int64_t *)value);
+        return snprintf(buffer, bufsz, "%" PRId64, *(int64_t *)value);
     case 4:
-        return snprintf(buffer, bufsz, "%d", *(int32_t *)value);
+        return snprintf(buffer, bufsz, "%" PRId32, *(int32_t *)value);
     case 2:
-        return snprintf(buffer, bufsz, "%hd", *(int16_t *)value);
+        return snprintf(buffer, bufsz, "%" PRId16, *(int16_t *)value);
     case 1:
-        return snprintf(buffer, bufsz, "%hhd", *(int8_t *)value);
+        return snprintf(buffer, bufsz, "%" PRId8, *(int8_t *)value);
     default:
-        print_error("Cannot print integer with %ld bytes.\n", nbytes);
+        print_error("Cannot print integer with %" PRId64 " bytes.\n", nbytes);
     }
     return 0;
 }
@@ -246,15 +247,15 @@ int snprintf_unsigned(char *restrict buffer, size_t bufsz, int64_t nbytes, const
     switch (nbytes)
     {
     case 8:
-        return snprintf(buffer, bufsz, "%lu", *(uint64_t *)value);
+        return snprintf(buffer, bufsz, "%" PRIu64, *(uint64_t *)value);
     case 4:
-        return snprintf(buffer, bufsz, "%u", *(uint32_t *)value);
+        return snprintf(buffer, bufsz, "%" PRIu32, *(uint32_t *)value);
     case 2:
-        return snprintf(buffer, bufsz, "%hu", *(uint16_t *)value);
+        return snprintf(buffer, bufsz, "%" PRIu16, *(uint16_t *)value);
     case 1:
-        return snprintf(buffer, bufsz, "%hhu", *(uint8_t *)value);
+        return snprintf(buffer, bufsz, "%" PRIu8, *(uint8_t *)value);
     default:
-        print_error("Cannot print unsigned integer with %ld bytes.\n", nbytes);
+        print_error("Cannot print unsigned integer with %" PRId64 " bytes.\n", nbytes);
     }
     return 0;
 }
@@ -268,7 +269,7 @@ int snprintf_float(char *restrict buffer, size_t bufsz, int64_t nbytes, const vo
     case 4:
         return snprintf(buffer, bufsz, "%g", *(float *)value);
     default:
-        print_error("Cannot print a floating point number with %ld bytes.\n", nbytes);
+        print_error("Cannot print a floating point number with %" PRId64 " bytes.\n", nbytes);
     }
     return 0;
 }
@@ -308,7 +309,7 @@ int snprintf_date(char *restrict buffer, size_t bufsz, frequency_t freq, int64_t
             print_de_error();
             return 0;
         }
-        return snprintf(buffer, bufsz, "%d-%02u-%02u", Y, M, D);
+        return snprintf(buffer, bufsz, "%" PRId32 "-%02" PRIu32 "-%02" PRIu32, Y, M, D);
     }
     else if ((date_fmt == date_fmt_yp) || ((date_fmt == date_fmt_auto) && _freq_is_yp(freq)))
     {
@@ -319,11 +320,11 @@ int snprintf_date(char *restrict buffer, size_t bufsz, frequency_t freq, int64_t
             print_de_error();
             return 0;
         }
-        return snprintf(buffer, bufsz, "%d-%02u", Y, P);
+        return snprintf(buffer, bufsz, "%" PRId32 "-%02" PRIu32, Y, P);
     }
     else if (freq == freq_unit)
     {
-        return snprintf(buffer, bufsz, "%ld", *(int64_t *)value);
+        return snprintf(buffer, bufsz, "%" PRId64, *(int64_t *)value);
     }
     else
     {
