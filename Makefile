@@ -119,7 +119,7 @@ TESTCOV_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(TEST_SRC_C)))
 TESTCOV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDECOV))) -L lib -ldaeccov
 
 # default goal - build everything
-all :: libdaec desh sqlite3
+all :: libdaec utils
 
 # include auto-generated dependencies
 include $(CACHEDIR)/Makefile.dep
