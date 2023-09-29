@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <inttypes.h>
 
 #ifdef HAVE_READLINE
 #include <readline/readline.h>
@@ -184,7 +185,18 @@ void new_scalar(void)
     case type_integer:
     {
         nbytes = sizeof(int64_t);
-        int ret = sscanf(value, "%li", (int64_t *)(val));
+        int ret = sscanf(value, "%" SCNi64, (int64_t *)(val));
+        if (ret != 1)
+        {
+            print_error("Failed to parse an integer number from %s", value);
+            nbytes = -1;
+        }
+        break;
+    }
+    case type_unsigned:
+    {
+        nbytes = sizeof(uint64_t);
+        int ret = sscanf(value, "%" SCNu64, (uint64_t *)(val));
         if (ret != 1)
         {
             print_error("Failed to parse an integer number from %s", value);
@@ -210,7 +222,7 @@ void new_scalar(void)
         {
             int32_t Y;
             uint32_t M, D;
-            int ret = sscanf(value, "%d-%u-%u", &Y, &M, &D);
+            int ret = sscanf(value, "%" SCNd32 "-%" SCNu32 "-%" SCNu32, &Y, &M, &D);
             if (ret != 3)
             {
                 print_error("Failed to parse date in format YYYY-MM-DD from %s", value);
@@ -227,7 +239,7 @@ void new_scalar(void)
         {
             int32_t Y;
             uint32_t P;
-            int ret = sscanf(value, "%d-%u", &Y, &P);
+            int ret = sscanf(value, "%" SCNd32 "-%" SCNu32, &Y, &P);
             if (ret != 2)
             {
                 print_error("Failed to parse date in format year-period from %s", value);
