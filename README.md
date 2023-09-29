@@ -120,7 +120,7 @@ int main(void)
 ```
 
 ```bash
-bash$ gcc -I ./src -L bin -Wl,-rpath,$(pwd)/bin -ldaec example.c -o example
+bash$ gcc -I ./include -L lib -Wl,-rpath,$(pwd)/lib -ldaec example.c -o example
 bash$ ./example
 Hello World
 ```

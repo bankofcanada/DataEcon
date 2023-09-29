@@ -28,26 +28,26 @@ HAVE_ZLIB = $(shell ./have_zlib.sh $(CC))
 ifeq ($(target),)
 # $(target) not specified => use OS we're running in
 	ifeq ($(OS),Windows_NT)
-		LIBDE = bin/daec.dll
-		LIBDECOV = bin/daeccov.dll
-		LIBDEPROF = bin/daecprof.dll
+		LIBDE = lib/daec.dll
+		LIBDECOV = lib/daeccov.dll
+		LIBDEPROF = lib/daecprof.dll
 	else
 		MY_LDFLAGS = -lpthread -ldl -lm
-		LIBDE = bin/libdaec.so
-		LIBDECOV = bin/libdaeccov.so
-		LIBDEPROF = bin/libdaecprof.so
+		LIBDE = lib/libdaec.so
+		LIBDECOV = lib/libdaeccov.so
+		LIBDEPROF = lib/libdaecprof.so
 	endif
 else
 # We have $(target) - use it
 	ifeq ($(findstring mingw32,$(target)),)
 		MY_LDFLAGS = -lpthread -ldl -lm
-		LIBDE = bin/libdaec.so
-		LIBDECOV = bin/libdaeccov.so
-		LIBDEPROF = bin/libdaecprof.so
+		LIBDE = lib/libdaec.so
+		LIBDECOV = lib/libdaeccov.so
+		LIBDEPROF = lib/libdaecprof.so
 	else
-		LIBDE = bin/daec.dll
-		LIBDECOV = bin/daeccov.dll
-		LIBDEPROF = bin/daecprof.dll
+		LIBDE = lib/daec.dll
+		LIBDECOV = lib/daeccov.dll
+		LIBDEPROF = lib/daecprof.dll
 	endif
 endif 
 
@@ -59,7 +59,7 @@ SQLITE3_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(SQLITE3_SRC_C)))
 SQLITE3_LDFLAGS = $(MY_LDFLAGS)
 
 # for our library
-# LIBDE = bin/libdaec.so
+# LIBDE = lib/libdaec.so
 LIBDE_SRC_H = $(wildcard src/libdaec/*.h) sqlite3.h
 LIBDE_SRC_C = $(wildcard src/libdaec/*.c)
 LIBDE_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(LIBDE_SRC_C)))
@@ -68,7 +68,7 @@ LIBDE_LDFLAGS = $(MY_LDFLAGS)
 LIBDEPROF_SRC_O = $(patsubst %.c,$(PROFDIR)/%.o,$(notdir $(LIBDE_SRC_C)))
 
 # for library including coverage
-# LIBDECOV = bin/libdaeccov.so
+# LIBDECOV = lib/libdaeccov.so
 LIBDECOV_SRC_O = $(patsubst %.c,$(COVDIR)/%.o,$(notdir $(LIBDE_SRC_C)))
 LIBDECOV_SRC_GCOV = $(patsubst %.c,%.c.gcov,$(notdir $(LIBDE_SRC_C)))
 
@@ -80,7 +80,7 @@ DESH = bin/desh
 # DESH_SRC_H = daec.h $(wildcard src/*.h)
 DESH_SRC_C = src/utils/desh.c
 DESH_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(DESH_SRC_C)))
-DESH_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
+DESH_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L lib -ldaec
 ifeq ($(HAVE_READLINE),yes)
 	DESH_CFLAGS += -DHAVE_READLINE
 	DESH_LDFLAGS += -lreadline
@@ -93,7 +93,7 @@ endif
 DAEC2CSV = bin/daec2csv
 DAEC2CSV_SRC_CC = src/utils/daec2csv.cc
 DAEC2CSV_SRC_O =  $(patsubst %.cc,$(CACHEDIR)/%.o,$(notdir $(DAEC2CSV_SRC_CC)))
-DAEC2CSV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
+DAEC2CSV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L lib -ldaec
 ifeq ($(HAVE_ZLIB),yes)
 	DAEC2CSV_CFLAGS += -DHAVE_ZLIB
 	DAEC2CSV_LDFLAGS += -lz
@@ -106,20 +106,20 @@ PROF = bin/prof
 # PROF_SRC_H = daec.h 
 PROF_SRC_C = src/prof.c
 PROF_SRC_O = $(patsubst %.c,$(PROFDIR)/%.o,$(notdir $(PROF_SRC_C)))
-# PROF_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaecprof
+# PROF_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L lib -ldaecprof
 
 TEST = bin/test
 TEST_SRC_C = src/test.c
 TEST_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(TEST_SRC_C)))
-TEST_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L bin -ldaec
+TEST_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L lib -ldaec
 
 TESTCOV = bin/testcov
 TESTCOV_SRC_C = src/test.c
 TESTCOV_SRC_O = $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(TEST_SRC_C)))
-TESTCOV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDECOV))) -L bin -ldaeccov
+TESTCOV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDECOV))) -L lib -ldaeccov
 
 # default goal - build everything
-all :: lib sqlite3
+all :: libdaec desh sqlite3
 
 # include auto-generated dependencies
 include $(CACHEDIR)/Makefile.dep
@@ -157,6 +157,10 @@ $(PROFDIR) : | $(CACHEDIR)
 bin :
 	@mkdir -p bin
 
+# make lib directory
+lib :
+	@mkdir -p lib
+
 # redirect generated .o files into .cache
 $(CACHEDIR)/%.o : %.c | $(CACHEDIR)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
@@ -188,11 +192,11 @@ $(SQLITE3): $(SQLITE3_SRC_O) $(CACHEDIR)/sqlite3.o | bin
 endif
 
 # link our library
-$(LIBDE): $(LIBDE_SRC_O) $(CACHEDIR)/sqlite3.o | bin
+$(LIBDE): $(LIBDE_SRC_O) $(CACHEDIR)/sqlite3.o | lib
 	$(LINK.c) -shared $^ -o $@ $(LIBDE_LDFLAGS)
 
 # link our library with coverage
-$(LIBDECOV): $(LIBDECOV_SRC_O) $(CACHEDIR)/sqlite3.o | bin
+$(LIBDECOV): $(LIBDECOV_SRC_O) $(CACHEDIR)/sqlite3.o | lib
 	$(LINK.c) -lgcov --coverage -shared $^ -o $@ $(LIBDE_LDFLAGS)
 
 # compile desh 
@@ -233,10 +237,10 @@ clean :: clean_cov clean_prof
 .PHONY : purge
 purge :: clean
 	@rm -f $(SQLITE3) $(SQLITE3_SRC_O)
-	@rm -f -r $(CACHEDIR) bin
+	@rm -f -r $(CACHEDIR) bin lib
 
-.PHONY : lib
-lib :: $(LIBDE)
+.PHONY : libdaec
+libdaec :: $(LIBDE)
 
 .PHONY : desh
 desh :: $(DESH)
