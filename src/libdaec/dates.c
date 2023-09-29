@@ -190,7 +190,7 @@ int _get_ppy(frequency_t freq, uint32_t *ppy)
 
 int _encode_ppy(frequency_t freq, int32_t year, uint32_t period, int32_t *N)
 {
-    uint32_t ppy;
+    uint32_t ppy = 0;
     TRACE_RUN(_get_ppy(freq, &ppy));
     *N = year * ppy + period - 1;
     return DE_SUCCESS;
@@ -198,7 +198,7 @@ int _encode_ppy(frequency_t freq, int32_t year, uint32_t period, int32_t *N)
 
 int _decode_ppy(frequency_t freq, int32_t N_U, int32_t *year, uint32_t *period)
 {
-    uint32_t ppy;
+    uint32_t ppy = 0;
     TRACE_RUN(_get_ppy(freq, &ppy));
     const uint32_t N = N_U + EPOCH_L * ppy;
     *period = N % ppy + 1;
@@ -280,7 +280,7 @@ int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, da
 {
     if (date == NULL)
         return error(DE_NULL);
-    int32_t N;
+    int32_t N = 0;
     if (_has_ppy(freq))
     {
         TRACE_RUN(_encode_ppy(freq, year, period, &N));
@@ -323,7 +323,7 @@ int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32
 {
     if (date == NULL)
         return error(DE_NULL);
-    int32_t N;
+    int32_t N = 0;
     if (_has_ppy(freq))
     {
         uint32_t ppy;
@@ -365,7 +365,7 @@ int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32
     const int32_t N = date;
     if (_has_ppy(freq))
     {
-        uint32_t ppy;
+        uint32_t ppy = 0;
         TRACE_RUN(_get_ppy(freq, &ppy));
         if (ppy > 12)
             return error1(DE_INTERNAL, "ppy > 12 not supported in de_unpack_calendar_date");
