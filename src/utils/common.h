@@ -20,12 +20,12 @@ extern "C"
     void print_error(const char *message, ...);
     void print_de_error();
 
-    void print_value(FILE *F, type_t obj_type, frequency_t freq, int64_t nbytes, const void *value);
-    void print_integer(FILE *F, int64_t nbytes, const void *value);
-    void print_unsigned(FILE *F, int64_t nbytes, const void *value);
-    void print_float(FILE *F, int64_t nbytes, const void *value);
-    void print_string(FILE *F, int64_t nbytes, const void *value);
-    void print_date(FILE *F, frequency_t freq, int64_t nbytes, const void *value);
+    int snprintf_value(char *buffer, size_t bufsz, type_t obj_type, frequency_t freq, int64_t nbytes, const void *value);
+    int snprintf_integer(char *buffer, size_t bufsz, int64_t nbytes, const void *value);
+    int snprintf_unsigned(char *buffer, size_t bufsz, int64_t nbytes, const void *value);
+    int snprintf_float(char *buffer, size_t bufsz, int64_t nbytes, const void *value);
+    int snprintf_string(char *buffer, size_t bufsz, int64_t nbytes, const void *value);
+    int snprintf_date(char *buffer, size_t bufsz, frequency_t freq, int64_t nbytes, const void *value);
 
     typedef enum date_fmt_enum
     {

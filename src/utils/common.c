@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "common.h"
 
@@ -15,6 +16,7 @@ struct frequencies_map
 };
 
 static struct frequencies_map FREQUENCIES_MAP[] = {
+    {freq_none, "none"},
     {freq_daily, "daily"},
     {freq_bdaily, "bdaily"},
     {freq_weekly, "weekly"},
@@ -200,97 +202,75 @@ void print_de_error()
 
 /****************************************************************************/
 
-void print_integer(FILE *F, int64_t nbytes, const void *value);
-void print_unsigned(FILE *F, int64_t nbytes, const void *value);
-void print_float(FILE *F, int64_t nbytes, const void *value);
-void print_date(FILE *F, frequency_t freq, int64_t nbytes, const void *value);
-void print_string(FILE *F, int64_t nbytes, const void *value);
-
-void print_value(FILE *F, type_t obj_type, frequency_t freq, int64_t nbytes, const void *value)
+int snprintf_value(char *restrict buffer, size_t bufsz, type_t obj_type, frequency_t freq, int64_t nbytes, const void *value)
 {
     /* dispatch according to obj_type */
     switch (obj_type)
     {
     case type_integer:
-        print_integer(F, nbytes, value);
-        break;
+        return snprintf_integer(buffer, bufsz, nbytes, value);
     case type_unsigned:
-        print_unsigned(F, nbytes, value);
-        break;
+        return snprintf_unsigned(buffer, bufsz, nbytes, value);
     case type_float:
-        print_float(F, nbytes, value);
-        break;
+        return snprintf_float(buffer, bufsz, nbytes, value);
     case type_date:
-        print_date(F, freq, nbytes, value);
-        break;
+        return snprintf_date(buffer, bufsz, freq, nbytes, value);
+    case type_string:
+        return snprintf_string(buffer, bufsz, nbytes, value);
     default:
         print_error("Cannot print value of type %s(%d).", _find_type_text(obj_type), obj_type);
-        break;
     }
-    return;
+    return 0;
 }
 
-void print_integer(FILE *F, int64_t nbytes, const void *value)
+int snprintf_integer(char *restrict buffer, size_t bufsz, int64_t nbytes, const void *value)
 {
     switch (nbytes)
     {
     case 8:
-        fprintf(F, "%ld", *(int64_t *)value);
-        break;
+        return snprintf(buffer, bufsz, "%ld", *(int64_t *)value);
     case 4:
-        fprintf(F, "%d", *(int32_t *)value);
-        break;
+        return snprintf(buffer, bufsz, "%d", *(int32_t *)value);
     case 2:
-        fprintf(F, "%hd", *(int16_t *)value);
-        break;
+        return snprintf(buffer, bufsz, "%hd", *(int16_t *)value);
     case 1:
-        fprintf(F, "%hhd", *(int8_t *)value);
-        break;
+        return snprintf(buffer, bufsz, "%hhd", *(int8_t *)value);
     default:
         print_error("Cannot print integer with %ld bytes.\n", nbytes);
-        break;
     }
-    return;
+    return 0;
 }
 
-void print_unsigned(FILE *F, int64_t nbytes, const void *value)
+int snprintf_unsigned(char *restrict buffer, size_t bufsz, int64_t nbytes, const void *value)
 {
     switch (nbytes)
     {
     case 8:
-        fprintf(F, "%lu", *(uint64_t *)value);
-        break;
+        return snprintf(buffer, bufsz, "%lu", *(uint64_t *)value);
     case 4:
-        fprintf(F, "%u", *(uint32_t *)value);
-        break;
+        return snprintf(buffer, bufsz, "%u", *(uint32_t *)value);
     case 2:
-        fprintf(F, "%hu", *(uint16_t *)value);
-        break;
+        return snprintf(buffer, bufsz, "%hu", *(uint16_t *)value);
     case 1:
-        fprintf(F, "%hhu", *(uint8_t *)value);
-        break;
+        return snprintf(buffer, bufsz, "%hhu", *(uint8_t *)value);
     default:
         print_error("Cannot print unsigned integer with %ld bytes.\n", nbytes);
-        break;
     }
-    return;
+    return 0;
 }
 
-void print_float(FILE *F, int64_t nbytes, const void *value)
+int snprintf_float(char *restrict buffer, size_t bufsz, int64_t nbytes, const void *value)
 {
     switch (nbytes)
     {
     case 8:
-        fprintf(F, "%lg", *(double *)value);
-        break;
+        return snprintf(buffer, bufsz, "%lg", *(double *)value);
     case 4:
-        fprintf(F, "%g", *(float *)value);
-        break;
+        return snprintf(buffer, bufsz, "%g", *(float *)value);
     default:
         print_error("Cannot print a floating point number with %ld bytes.\n", nbytes);
-        break;
     }
-    return;
+    return 0;
 }
 
 static date_fmt_t date_fmt;
@@ -317,7 +297,7 @@ bool _freq_is_ymd(frequency_t freq)
     return freq == freq_daily || freq == freq_bdaily || (freq & freq_weekly) != 0;
 }
 
-void print_date(FILE *F, frequency_t freq, int64_t nbytes, const void *value)
+int snprintf_date(char *restrict buffer, size_t bufsz, frequency_t freq, int64_t nbytes, const void *value)
 {
     if ((date_fmt == date_fmt_ymd) || ((date_fmt == date_fmt_auto) && _freq_is_ymd(freq)))
     {
@@ -326,9 +306,9 @@ void print_date(FILE *F, frequency_t freq, int64_t nbytes, const void *value)
         if (DE_SUCCESS != de_unpack_calendar_date(freq, *(date_t *)value, &Y, &M, &D))
         {
             print_de_error();
-            return;
+            return 0;
         }
-        fprintf(F, "%d-%02u-%02u", Y, M, D);
+        return snprintf(buffer, bufsz, "%d-%02u-%02u", Y, M, D);
     }
     else if ((date_fmt == date_fmt_yp) || ((date_fmt == date_fmt_auto) && _freq_is_yp(freq)))
     {
@@ -337,25 +317,24 @@ void print_date(FILE *F, frequency_t freq, int64_t nbytes, const void *value)
         if (DE_SUCCESS != de_unpack_year_period_date(freq, *(date_t *)value, &Y, &P))
         {
             print_de_error();
-            return;
+            return 0;
         }
-        fprintf(F, "%d-%02u", Y, P);
+        return snprintf(buffer, bufsz, "%d-%02u", Y, P);
     }
     else if (freq == freq_unit)
     {
-        fprintf(F, "%ld", *(int64_t *)value);
+        return snprintf(buffer, bufsz, "%ld", *(int64_t *)value);
     }
     else
     {
         print_error("Cannot print date with frequency %s(%d).", _find_frequency_text(freq), freq);
+        return 0;
     }
-    return;
 }
 
-void print_string(FILE *F, int64_t nbytes, const void *value)
+int snprintf_string(char *restrict buffer, size_t bufsz, int64_t nbytes, const void *value)
 {
-    fprintf(F, "%s", (char *)value);
-    return;
+    return snprintf(buffer, bufsz, "\"%s\"", (char *)value);
 }
 
 /****************************************************************************/

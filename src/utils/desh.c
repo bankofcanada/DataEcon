@@ -273,7 +273,9 @@ void print_scalar(obj_id_t id)
         print_de_error();
         return;
     }
-    print_value(stdout, scalar.object.obj_type, scalar.frequency, scalar.nbytes, scalar.value);
+    char svalue[1024];
+    snprintf_value(svalue, sizeof svalue, scalar.object.obj_type, scalar.frequency, scalar.nbytes, scalar.value);
+    fprintf(stdout, "%s", svalue);
 }
 
 void print_object(obj_id_t id)

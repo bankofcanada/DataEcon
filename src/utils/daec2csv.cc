@@ -3,7 +3,7 @@
 #include <string>
 #include <complex>
 
-#ifdef HAVE_ZLIB
+#if defined HAVE_ZLIB
 #include <zlib.h>
 #endif
 
@@ -13,11 +13,32 @@
 
 using namespace std;
 
-static std::FILE *D = NULL;
-static std::FILE *M = NULL;
 static de_file de = NULL;
 
-bool export_scalars = export_scalars;
+#if !defined ZLIB_H
+typedef void *gzFile;
+int gzputs(gzFile, const char *message) { return 0; }
+int gzclose(gzFile file) { return 0; }
+int gzbuffer(gzFile file, unsigned size) { return 0; }
+gzFile gzopen(const char *path, const char *mode)
+{
+    print_error("Cannot open compressed file - zlib library not available");
+    return NULL;
+}
+#endif
+
+struct outFile
+{
+    bool compressed;
+    union
+    {
+        FILE *F;
+        gzFile gz;
+    };
+} OutputFile;
+
+static struct outFile M = {false, NULL};
+static struct outFile D = {false, NULL};
 
 void print_usage(const char *program)
 {
@@ -29,16 +50,18 @@ void print_usage(const char *program)
     return;
 }
 
+void write_line(struct outFile &F, const char *line)
+{
+    if (F.compressed && F.gz != NULL)
+        gzputs(F.gz, line);
+    else if (F.F != NULL)
+        fputs(line, F.F);
+}
+
 void print_header()
 {
-    if (M != NULL)
-    {
-        fprintf(M, "name,class,type,frequency\n");
-    }
-    if (D != NULL)
-    {
-        fprintf(D, "date,name,value\n");
-    }
+    write_line(M, "name,class,type,frequency\n");
+    write_line(D, "date,name,value\n");
 }
 
 int get_object_name(const object_t &object, const char **obj_name)
@@ -70,20 +93,18 @@ int export_scalar(const object_t &object)
         return rc;
     }
 
-    if (M != NULL)
-    {
-        fprintf(M, "\"%s\",%s,%s,%s\n", obj_name,
-                _find_class_text(object.obj_class),
-                _find_type_text(object.obj_type),
-                _find_frequency_text(scalar.frequency));
-    }
+    char buffer[4096];
+    snprintf(buffer, sizeof buffer, "\"%s\",%s,%s,%s\n", obj_name,
+             _find_class_text(object.obj_class),
+             _find_type_text(object.obj_type),
+             _find_frequency_text(scalar.frequency));
+    write_line(M, buffer);
 
-    if (D != NULL)
-    {
-        fprintf(D, "\"N/A\",\"%s\",", obj_name);
-        print_value(D, object.obj_type, scalar.frequency, scalar.nbytes, scalar.value);
-        fprintf(D, "\n");
-    }
+    char value[1024];
+    (void)snprintf_value(value, sizeof value, object.obj_type, scalar.frequency, scalar.nbytes, scalar.value);
+    snprintf(buffer, sizeof buffer, "\"N/A\",\"%s\",%s\n", obj_name, value);
+    write_line(D, buffer);
+
     return 0;
 }
 
@@ -105,35 +126,38 @@ int export_series(const object_t &object)
         return rc;
     }
 
-    std::string name(obj_name);
+    char buffer[4096];
+    snprintf(buffer, sizeof buffer, "\"%s\",%s,%s,%s\n", obj_name,
+             _find_class_text(object.obj_class),
+             _find_type_text(object.obj_type),
+             _find_frequency_text(tseries.axis.frequency));
+    write_line(M, buffer);
 
-    if (M != NULL)
-    {
-        fprintf(M, "\"%s\",%s,%s,%s\n", obj_name,
-                _find_class_text(object.obj_class),
-                _find_type_text(object.obj_type),
-                _find_frequency_text(tseries.axis.frequency));
-    }
-
-    if (D != NULL)
     {
         frequency_t freq = tseries.axis.frequency;
-        date_t first_date = tseries.axis.first;
+        date_t date = tseries.axis.first;
         int64_t elbytes = tseries.nbytes / tseries.axis.length;
         type_t eltype;
         frequency_t elfreq;
-        const int8_t * valptr = (const int8_t *)tseries.value;
+        const int8_t *valptr = (const int8_t *)tseries.value;
         (void)de_unpack_eltype(tseries.eltype, &eltype, &elfreq);
-        for (auto i = 0; i < tseries.axis.length; ++i)
+        if (eltype == type_string)
         {
-            date_t date = first_date + i;
-            fprintf(D, "\"");
-            print_date(D, freq, sizeof date, &date);
-            fprintf(D, "\",\"%s\",", obj_name);
-            print_value(D, eltype, elfreq, elbytes, valptr + elbytes * i);
-            fprintf(D, "\n");
+            print_error("Cannot handle series of eltype string");
+            return -1;
+        }
+        char sdate[1024], sval[1024];
+        for (auto i = 0; i < tseries.axis.length; ++i, ++date)
+        {
+            snprintf_date(sdate, sizeof sdate, freq, sizeof date, &date);
+            snprintf_value(sval, sizeof sval, eltype, elfreq, elbytes, valptr);
+            snprintf(buffer, sizeof buffer, "\"%s\",\"%s\",%s\n", sdate, obj_name, sval);
+            write_line(D, buffer);
+            date += 1;
+            valptr += elbytes;
         }
     }
+
     return 0;
 }
 
@@ -181,20 +205,37 @@ int export_catalog(obj_id_t pid)
 
 void close_all()
 {
-    if (M != NULL)
-    {
-        fclose(M);
-        M = NULL;
-    }
-    if (D != NULL)
-    {
-        fclose(D);
-        D = NULL;
-    }
+    if (M.compressed && M.gz != NULL)
+        gzclose(M.gz);
+    else if (M.F != NULL)
+        fclose(M.F);
+    if (D.compressed && D.gz != NULL)
+        gzclose(D.gz);
+    else if (D.F != NULL)
+        fclose(D.F);
     if (de != NULL)
-    {
         de_close(de);
+}
+
+bool open_file(struct outFile &F, const char *_fname)
+{
+    std::string fname(_fname);
+    F.compressed = fname.rfind(".gz") != std::string::npos;
+    if (F.compressed)
+    {
+        F.gz = gzopen(_fname, "w");
+        gzbuffer(F.gz, 64 * 1024);
     }
+    else
+    {
+        F.F = fopen(_fname, "w");
+    }
+    if (F.F == NULL)
+    {
+        print_error("Failed to open file %s for writing.", _fname);
+        return false;
+    }
+    return true;
 }
 
 int main(int argc, char *argv[])
@@ -208,24 +249,22 @@ int main(int argc, char *argv[])
     if (de_open_readonly(argv[1], &de) != DE_SUCCESS)
     {
         print_de_error();
+        print_error("Failed to open file %s for reading.", argv[1]);
         return EXIT_FAILURE;
     }
 
-    if (argc >= 2)
+    if (argc > 2)
     {
-        D = fopen(argv[2], "w");
-        if (D == NULL)
+
+        if (!open_file(D, argv[2]))
         {
-            print_error("Failed to open file %s", argv[2]);
             close_all();
             return EXIT_FAILURE;
         }
-        if (argc > 2)
+        if (argc > 3)
         {
-            M = fopen(argv[3], "w");
-            if (M == NULL)
+            if (!open_file(M, argv[3]))
             {
-                print_error("Failed to open file %s", argv[3]);
                 close_all();
                 return EXIT_FAILURE;
             }

@@ -8,16 +8,12 @@ PROFDIR = $(CACHEDIR)/prof
 # search path for targets and prereqs
 VPATH = include src src/libdaec src/sqlite3 src/utils
 
-# vpath %.h src/libdaec src/sqlite3
-# vpath %.c src/libdaec src/sqlite3
-# vpath %.o src/libdaec src/sqlite3
-
 # for C
-CFLAGS = -std=c99 -O3 -Wall -Wpedantic -fPIC
+CFLAGS = -std=c99 -O3 -g -Wall -Wpedantic -fPIC
 # CFLAGS = -std=c99 -O0 -g -Wall -Wpedantic -fPIC
 
 # for C++
-CXXFLAGS = -std=c++11 -O3 -Wall -Wpedantic -fPIC
+CXXFLAGS = -std=c++11 -O3 -g -Wall -Wpedantic -fPIC
 # CXXFLAGS = -std=c++11 -O0 -g -Wall -Wpedantic -fPIC
 
 # add include directories from VPATH
