@@ -1,8 +1,3 @@
-#ifdef __STDC_ALLOC_LIB__
-#define __STDC_WANT_LIB_EXT2__ 1
-#else
-#define _POSIX_C_SOURCE 200809L
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -116,10 +111,10 @@ char *repl_read_command()
     printf("\n");
     return readline(desh_prompt);
 #else
-    char *line = NULL;
-    size_t len;
+    char *line = malloc(2048);
+    size_t len = 2048;
     printf("\n%s", desh_prompt);
-    if (getline(&line, &len, stdin) < 0)
+    if (fgets(line, len, stdin) == NULL)
     {
         free(line);
         return NULL;
@@ -311,7 +306,7 @@ void list_database(void)
     int ret = de_next_object(search, &obj);
     while (ret == DE_SUCCESS)
     {
-        fprintf(stdout, "%s =", obj.name);
+        fprintf(stdout, "%s = ", obj.name);
         print_object(obj.id);
         fprintf(stdout, "\n");
         ret = de_next_object(search, &obj);
