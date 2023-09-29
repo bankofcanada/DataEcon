@@ -1,0 +1,6 @@
+ignore:
+  - "src/utils"
+  - "src/sqlite3"
+  
+comment:
+  after_n_builds: 1
