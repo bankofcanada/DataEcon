@@ -24,10 +24,12 @@ jobs:
       - name: test
         run: |
           echo "Running tests"
-          make test
+          make CC=gcc libdaec
+          export PATH=$PATH;$(pwd)/lib
+          make CC=gcc test
 
       - name: build
         run: |
           echo "Build all"
-          make purge
-          make all
+          make CC=gcc purge
+          make CC=gcc all
