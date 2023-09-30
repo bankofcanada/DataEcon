@@ -25,7 +25,7 @@ jobs:
         run: |
           echo "Running tests"
           make CC=gcc libdaec
-          export PATH=$PATH;$(pwd)/lib
+          export PATH=$PATH:$(pwd)/lib
           make CC=gcc test
 
       - name: build
