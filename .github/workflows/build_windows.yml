@@ -9,19 +9,27 @@ on:
 jobs:
   build_windows:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - uses: actions/checkout@v3
-      - name: setup_mingw
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: x64
+      - name: setup
+        run: |
+          echo "Setup environment"
+          make --version
+          gcc --version
+
       - name: test
         run: |
-          echo "Run tests"
-          gcc --version
-          make test
+          echo "Running tests"
+          make CC=gcc libdaec
+          export PATH=$PATH:$(pwd)/lib
+          make CC=gcc test
+
       - name: build
         run: |
           echo "Build all"
-          make purge
-          make all
+          make CC=gcc purge
+          make CC=gcc all
