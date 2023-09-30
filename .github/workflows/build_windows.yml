@@ -14,15 +14,16 @@ jobs:
         shell: bash
 
     steps:
+      - uses: actions/checkout@v3
       - name: setup
         run: |
+          echo "Setup environment"
           make --version
           gcc --version
-          ls -al
 
       - name: test
         run: |
-          echo "Run tests"
+          echo "Running tests"
           make test
 
       - name: build
