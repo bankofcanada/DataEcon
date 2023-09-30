@@ -16,7 +16,9 @@ jobs:
     steps:
       - name: setup
         run: |
+          make --version
           gcc --version
+          ls -al
 
       - name: test
         run: |
