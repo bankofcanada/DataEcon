@@ -29,4 +29,6 @@ int de_load_scalar(de_file de, obj_id_t id, scalar_t *scalar);
 /* ========================================================================= */
 /* internal */
 
+bool check_scalar_type(type_t type);
+
 #endif

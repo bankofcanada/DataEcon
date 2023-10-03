@@ -26,8 +26,9 @@ enum
     DE_BAD_AXIS_TYPE,     /* invalid axis type code */
     DE_BAD_CLASS,         /* class of object does not match */
     DE_BAD_TYPE,          /* type of object is not valid for its class */
-    DE_BAD_ELTYPE_DATE,   /* element type date should be specified with its frequency code */
-    DE_BAD_ELTYPE_NONE,   /* element type set to NONE for object type other than range */
+    DE_BAD_ELTYPE,        /* element type is not scalar */
+    DE_BAD_ELTYPE_NONE,   /* element type is type_none(0) for an object type other than range */
+    DE_BAD_ELTYPE_DATE,   /* element type is date must have element frequency other than freq_none (0) */
     DE_BAD_NAME,          /* invalid object name */
     DE_BAD_FREQ,          /* bad frequency */
     DE_SHORT_BUF,         /* provided buffer is too short */

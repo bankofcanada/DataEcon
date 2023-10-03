@@ -17,10 +17,12 @@ extern "C"
     int _find_class_code(const char *text);
     const char *_find_class_text(class_t obj_class);
 
+    const char *_eltype_text(type_t eltype, frequency_t elfreq);
+
     void print_error(const char *message, ...);
     void print_de_error();
 
-    int snprintf_value(char *buffer, size_t bufsz, type_t obj_type, frequency_t freq, int64_t nbytes, const void *value);
+    int snprintf_value(char *buffer, size_t bufsz, type_t val_type, frequency_t val_freq, int64_t nbytes, const void *value);
     int snprintf_integer(char *buffer, size_t bufsz, int64_t nbytes, const void *value);
     int snprintf_unsigned(char *buffer, size_t bufsz, int64_t nbytes, const void *value);
     int snprintf_float(char *buffer, size_t bufsz, int64_t nbytes, const void *value);

@@ -409,7 +409,8 @@ int sql_new_axis(de_file de, axis_t *axis)
 /**************************************************************/
 /* tseries */
 
-int sql_store_tseries_value(de_file de, obj_id_t id, type_t eltype,
+int sql_store_tseries_value(de_file de, obj_id_t id, 
+                            type_t eltype, frequency_t elfreq, 
                             axis_id_t axis_id, int64_t nbytes,
                             const void *value)
 {
@@ -420,14 +421,15 @@ int sql_store_tseries_value(de_file de, obj_id_t id, type_t eltype,
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
     CHECK_SQLITE(sqlite3_bind_int(stmt, 2, eltype));
-    CHECK_SQLITE(sqlite3_bind_int64(stmt, 3, axis_id));
+    CHECK_SQLITE(sqlite3_bind_int(stmt, 3, elfreq));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 4, axis_id));
     if (value != NULL && nbytes > 0)
     {
-        CHECK_SQLITE(sqlite3_bind_blob(stmt, 4, value, nbytes, SQLITE_TRANSIENT));
+        CHECK_SQLITE(sqlite3_bind_blob(stmt, 5, value, nbytes, SQLITE_TRANSIENT));
     }
     else
     {
-        CHECK_SQLITE(sqlite3_bind_null(stmt, 4));
+        CHECK_SQLITE(sqlite3_bind_null(stmt, 5));
     }
     rc = sqlite3_step(stmt);
     return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
@@ -439,9 +441,10 @@ void _fill_tseries(sqlite3_stmt *stmt, tseries_t *tseries)
     if (id != tseries->object.id)
         error(DE_BAD_OBJ);
     tseries->eltype = sqlite3_column_int(stmt, 1);
-    tseries->axis.id = sqlite3_column_int64(stmt, 2);
-    tseries->nbytes = sqlite3_column_bytes(stmt, 3);
-    tseries->value = sqlite3_column_blob(stmt, 3);
+    tseries->elfreq = sqlite3_column_int(stmt, 2);
+    tseries->axis.id = sqlite3_column_int64(stmt, 3);
+    tseries->nbytes = sqlite3_column_bytes(stmt, 4);
+    tseries->value = sqlite3_column_blob(stmt, 4);
 }
 
 int sql_load_tseries_value(de_file de, obj_id_t id, tseries_t *tseries)
@@ -468,7 +471,8 @@ int sql_load_tseries_value(de_file de, obj_id_t id, tseries_t *tseries)
 /**************************************************************/
 /* mvtseries */
 
-int sql_store_mvtseries_value(de_file de, obj_id_t id, type_t eltype,
+int sql_store_mvtseries_value(de_file de, obj_id_t id, 
+                              type_t eltype,frequency_t elfreq,
                               axis_id_t axis1_id, axis_id_t axis2_id,
                               int64_t nbytes, const void *value)
 {
@@ -479,15 +483,16 @@ int sql_store_mvtseries_value(de_file de, obj_id_t id, type_t eltype,
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
     CHECK_SQLITE(sqlite3_bind_int(stmt, 2, eltype));
-    CHECK_SQLITE(sqlite3_bind_int64(stmt, 3, axis1_id));
-    CHECK_SQLITE(sqlite3_bind_int64(stmt, 4, axis2_id));
+    CHECK_SQLITE(sqlite3_bind_int(stmt, 3, elfreq));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 4, axis1_id));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 5, axis2_id));
     if (value != NULL && nbytes > 0)
     {
-        CHECK_SQLITE(sqlite3_bind_blob(stmt, 5, value, nbytes, SQLITE_TRANSIENT));
+        CHECK_SQLITE(sqlite3_bind_blob(stmt, 6, value, nbytes, SQLITE_TRANSIENT));
     }
     else
     {
-        CHECK_SQLITE(sqlite3_bind_null(stmt, 5));
+        CHECK_SQLITE(sqlite3_bind_null(stmt, 6));
     }
     rc = sqlite3_step(stmt);
     return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
@@ -499,10 +504,11 @@ void _fill_mvtseries(sqlite3_stmt *stmt, mvtseries_t *mvtseries)
     if (id != mvtseries->object.id)
         error(DE_BAD_OBJ);
     mvtseries->eltype = sqlite3_column_int(stmt, 1);
-    mvtseries->axis1.id = sqlite3_column_int64(stmt, 2);
-    mvtseries->axis2.id = sqlite3_column_int64(stmt, 3);
-    mvtseries->nbytes = sqlite3_column_bytes(stmt, 4);
-    mvtseries->value = sqlite3_column_blob(stmt, 4);
+    mvtseries->elfreq = sqlite3_column_int(stmt, 2);
+    mvtseries->axis1.id = sqlite3_column_int64(stmt, 3);
+    mvtseries->axis2.id = sqlite3_column_int64(stmt, 4);
+    mvtseries->nbytes = sqlite3_column_bytes(stmt, 5);
+    mvtseries->value = sqlite3_column_blob(stmt, 5);
 }
 
 int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries)

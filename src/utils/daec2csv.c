@@ -58,7 +58,7 @@ void write_line(struct outFile *F, const char *line)
 
 void print_header()
 {
-    write_line(&M, "name,class,type,frequency\n");
+    write_line(&M, "name,type,frequency,eltype\n");
     write_line(&D, "date,name,value\n");
 }
 
@@ -93,9 +93,9 @@ int export_scalar(const object_t *object)
 
     char buffer[4096];
     snprintf(buffer, sizeof buffer, "\"%s\",%s,%s,%s\n", obj_name,
-             _find_class_text(object->obj_class),
              _find_type_text(object->obj_type),
-             _find_frequency_text(scalar.frequency));
+             _find_frequency_text(scalar.frequency),
+             _find_type_text(object->obj_type));
     write_line(&M, buffer);
 
     char value[1024];
@@ -126,19 +126,19 @@ int export_series(const object_t *object)
 
     char buffer[4096];
     snprintf(buffer, sizeof buffer, "\"%s\",%s,%s,%s\n", obj_name,
-             _find_class_text(object->obj_class),
              _find_type_text(object->obj_type),
-             _find_frequency_text(tseries.axis.frequency));
+             _find_frequency_text(tseries.axis.frequency),
+             _eltype_text(tseries.eltype, tseries.elfreq)
+             );
     write_line(&M, buffer);
 
     {
         frequency_t freq = tseries.axis.frequency;
         date_t date = tseries.axis.first;
         int64_t elbytes = tseries.nbytes / tseries.axis.length;
-        type_t eltype;
-        frequency_t elfreq;
+        type_t eltype = tseries.eltype;
+        frequency_t elfreq = tseries.elfreq;
         const int8_t *valptr = (const int8_t *)tseries.value;
-        (void)de_unpack_eltype(tseries.eltype, &eltype, &elfreq);
         if (eltype == type_string)
         {
             print_error("Cannot handle series of eltype string");

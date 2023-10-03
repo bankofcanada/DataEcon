@@ -131,11 +131,14 @@ int de_error(char *restrict msg, size_t len)
         case DE_BAD_TYPE:
             snprintf(msg, len, fmt, code, "type of object is not valid for its class");
             break;
-        case DE_BAD_ELTYPE_DATE:
-            snprintf(msg, len, fmt, code, "element type date should be specified with its frequency code");
+        case DE_BAD_ELTYPE:
+            snprintf(msg, len, fmt, code, "element type is not scalar");
             break;
         case DE_BAD_ELTYPE_NONE:
-            snprintf(msg, len, fmt, code, "element type set to NONE for object type other than range");
+            snprintf(msg, len, fmt, code, "element type is type_none(0) for an object type other than range");
+            break;
+        case DE_BAD_ELTYPE_DATE:
+            snprintf(msg, len, fmt, code, "element type is date must have element frequency other than freq_none (0)");
             break;
         case DE_BAD_NAME:
             snprintf(msg, len, fmt1, code, "invalid object name", last_error.arg);

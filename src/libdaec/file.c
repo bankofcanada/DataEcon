@@ -60,17 +60,18 @@ int _init_file(de_file de)
     RUN_SQL(de,
             "CREATE TABLE `axes`("
             "   `id` INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "   `type` INTEGER NOT NULL,"
+            "   `ax_type` INTEGER NOT NULL,"
             "   `length` INTEGER NOT NULL CHECK(`length` >= 0),"
             "   `frequency` INTEGER NOT NULL,"
             "   `data` ANY"
             ") STRICT;");
     RUN_SQL(de,
-            "CREATE INDEX `axes_1` ON `axes`(`type`, `length`, `frequency`, `data`);");
+            "CREATE INDEX `axes_1` ON `axes`(`ax_type`, `length`, `frequency`, `data`);");
     RUN_SQL(de,
             "CREATE TABLE `tseries` ("
             "   `id` INTEGER PRIMARY KEY,"
             "   `eltype` INTEGER NOT NULL,"
+            "   `elfreq` INTEGER NOT NULL,"
             "   `axis_id` INTEGER NOT NULL,"
             "   `value` BLOB,"
             "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
@@ -80,6 +81,7 @@ int _init_file(de_file de)
             "CREATE TABLE `mvtseries` ("
             "   `id` INTEGER PRIMARY KEY,"
             "   `eltype` INTEGER NOT NULL,"
+            "   `elfreq` INTEGER NOT NULL,"
             "   `axis1_id` INTEGER NOT NULL,"
             "   `axis2_id` INTEGER NOT NULL,"
             "   `value` BLOB,"
@@ -111,25 +113,25 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
     case stmt_store_scalar:
         return "INSERT INTO `scalars` (`id`, `frequency`, `value`) VALUES (?,?,?);";
     case stmt_store_tseries:
-        return "INSERT INTO `tseries` (`id`, `eltype`, `axis_id`, `value`) VALUES (?,?,?,?);";
+        return "INSERT INTO `tseries` (`id`, `eltype`, `elfreq`, `axis_id`, `value`) VALUES (?,?,?,?,?);";
     case stmt_store_mvtseries:
-        return "INSERT INTO `mvtseries` (`id`, `eltype`, `axis1_id`, `axis2_id`, `value`) VALUES (?,?,?,?,?);";
+        return "INSERT INTO `mvtseries` (`id`, `eltype`, `elfreq`, `axis1_id`, `axis2_id`, `value`) VALUES (?,?,?,?,?,?);";
     case stmt_new_axis:
-        return "INSERT INTO `axes` (`type`, `length`, `frequency`, `data`) VALUES (?,?,?,?);";
+        return "INSERT INTO `axes` (`ax_type`, `length`, `frequency`, `data`) VALUES (?,?,?,?);";
     case stmt_find_object:
         return "SELECT `id`, `pid`, `class`, `type`, `name` FROM `objects` WHERE `pid` = ? AND `name` = ?;";
     case stmt_find_fullpath:
         return "SELECT `id` from `objects_info` WHERE `fullpath` = ?;";
     case stmt_find_axis:
-        return "SELECT `id`, `data` FROM `axes` WHERE `type` = ? AND `length` = ? AND `frequency` = ?;";
+        return "SELECT `id`, `data` FROM `axes` WHERE `ax_type` = ? AND `length` = ? AND `frequency` = ?;";
     case stmt_load_object:
         return "SELECT `id`, `pid`, `class`, `type`, `name` FROM `objects` WHERE `id` = ?;";
     case stmt_load_scalar:
         return "SELECT `id`, `frequency`, `value` FROM `scalars` WHERE `id` = ?;";
     case stmt_load_tseries:
-        return "SELECT `id`, `eltype`, `axis_id`, `value` FROM `tseries` WHERE `id` = ?;";
+        return "SELECT `id`, `eltype`, `elfreq`, `axis_id`, `value` FROM `tseries` WHERE `id` = ?;";
     case stmt_load_mvtseries:
-        return "SELECT `id`, `eltype`, `axis1_id`, `axis2_id`, `value` FROM `mvtseries` WHERE `id` = ?;";
+        return "SELECT `id`, `eltype`, `elfreq`, `axis1_id`, `axis2_id`, `value` FROM `mvtseries` WHERE `id` = ?;";
     case stmt_load_axis:
         return "SELECT * FROM `axes` WHERE `id` = ?;";
     case stmt_delete_object:

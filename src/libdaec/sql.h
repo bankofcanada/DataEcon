@@ -61,13 +61,13 @@ int sql_new_axis(de_file de, axis_t *axis);
 int sql_load_axis(de_file de, axis_id_t id, axis_t *axis);
 
 /* create a new row in the tseries table for the given id and data */
-int sql_store_tseries_value(de_file de, obj_id_t id, type_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value);
+int sql_store_tseries_value(de_file de, obj_id_t id, type_t eltype, frequency_t elfreq, axis_id_t axis_id, int64_t nbytes, const void *value);
 
 /* load a row from the tseries table with the given id */
 int sql_load_tseries_value(de_file de, obj_id_t id, tseries_t *tseries);
 
 /* create a new row in the tseries table for the given id and data */
-int sql_store_mvtseries_value(de_file de, obj_id_t id, type_t eltype, axis_id_t axis1_id, axis_id_t axis2_id, int64_t nbytes, const void *value);
+int sql_store_mvtseries_value(de_file de, obj_id_t id, type_t eltype, frequency_t elfreq, axis_id_t axis1_id, axis_id_t axis2_id, int64_t nbytes, const void *value);
 
 /* load a row from the tseries table with the given id */
 int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries);

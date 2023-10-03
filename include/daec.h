@@ -5,11 +5,11 @@
 #include <stdint.h>
 
 /* ***************************** config ************************************** */
-#define DE_VERSION "0.3.0"
-#define DE_VERNUM 0x0300
+#define DE_VERSION "0.3.1"
+#define DE_VERNUM 0x0310
 #define DE_VER_MAJOR 0
 #define DE_VER_MINOR 3
-#define DE_VER_REVISION 0
+#define DE_VER_REVISION 1
 #define DE_VER_SUBREVISION 0
 
 #ifdef __cplusplus
@@ -40,8 +40,9 @@ extern "C"
         DE_BAD_AXIS_TYPE,     /* invalid axis type code */
         DE_BAD_CLASS,         /* class of object does not match */
         DE_BAD_TYPE,          /* type of object is not valid for its class */
-        DE_BAD_ELTYPE_DATE,   /* element type date should be specified with its frequency code */
-        DE_BAD_ELTYPE_NONE,   /* element type set to NONE for object type other than range */
+        DE_BAD_ELTYPE,        /* element type is not scalar */
+        DE_BAD_ELTYPE_NONE,   /* element type is type_none(0) for an object type other than range */
+        DE_BAD_ELTYPE_DATE,   /* element type is date must have element frequency other than freq_none (0) */
         DE_BAD_NAME,          /* invalid object name */
         DE_BAD_FREQ,          /* bad frequency */
         DE_SHORT_BUF,         /* provided buffer is too short */
@@ -274,15 +275,11 @@ extern "C"
 
     /* ***************************** tseries ************************************* */
 
-    typedef int eltype_t;
-
-    int de_pack_eltype(type_t type, frequency_t freq, eltype_t *eltype);
-    int de_unpack_eltype(eltype_t eltype, type_t *type, frequency_t *freq);
-
     typedef struct
     {
         object_t object;
-        eltype_t eltype;
+        type_t eltype;
+        frequency_t elfreq;
         axis_t axis;
         int64_t nbytes;
         const void *value; /* we don't manage the memory for the value */
@@ -291,7 +288,8 @@ extern "C"
 
     /* create a new 1d-array object in a given parent catalog */
     int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
-                         eltype_t eltype, axis_id_t axis_id, int64_t nbytes, const void *value,
+                         type_t eltype, frequency_t elfreq,
+                         axis_id_t axis_id, int64_t nbytes, const void *value,
                          obj_id_t *id);
 
     /* load a 1d-array object by name from a given parent catalog */
@@ -302,7 +300,8 @@ extern "C"
     typedef struct
     {
         object_t object;
-        eltype_t eltype;
+        type_t eltype;
+        frequency_t elfreq;
         axis_t axis1;
         axis_t axis2;
         int64_t nbytes;
@@ -312,11 +311,12 @@ extern "C"
 
     /* create a new 1d-array object in a given parent catalog */
     int de_store_mvtseries(de_file de, obj_id_t pid, const char *name, type_t type,
-                           eltype_t eltype, axis_id_t axis1_id, axis_id_t axis2_id,
+                           type_t eltype, frequency_t elfreq,
+                           axis_id_t axis1_id, axis_id_t axis2_id,
                            int64_t nbytes, const void *value,
                            obj_id_t *id);
 
-    /* load a 1d-array object by name from a given parent catalog */
+    /* load a 2d-array object by name from a given parent catalog */
     int de_load_mvtseries(de_file de, obj_id_t id, mvtseries_t *mvtseries);
 
     /* ***************************** misc **************************************** */

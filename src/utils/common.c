@@ -184,6 +184,18 @@ const char *_find_class_text(class_t obj_class)
 
 /****************************************************************************/
 
+const char *_eltype_text(type_t eltype, frequency_t elfreq)
+{
+    if (eltype != type_date) {
+        return _find_type_text(eltype);
+    }
+    static char foobar[100];
+    snprintf(foobar, sizeof foobar, "date(%s)", _find_frequency_text(elfreq));
+    return foobar;
+}
+
+/****************************************************************************/
+
 void print_error(const char *message, ...)
 {
     va_list args;
@@ -203,10 +215,10 @@ void print_de_error()
 
 /****************************************************************************/
 
-int snprintf_value(char *restrict buffer, size_t bufsz, type_t obj_type, frequency_t freq, int64_t nbytes, const void *value)
+int snprintf_value(char *restrict buffer, size_t bufsz, type_t val_type, frequency_t val_freq, int64_t nbytes, const void *value)
 {
-    /* dispatch according to obj_type */
-    switch (obj_type)
+    /* dispatch according to val_type */
+    switch (val_type)
     {
     case type_integer:
         return snprintf_integer(buffer, bufsz, nbytes, value);
@@ -215,11 +227,11 @@ int snprintf_value(char *restrict buffer, size_t bufsz, type_t obj_type, frequen
     case type_float:
         return snprintf_float(buffer, bufsz, nbytes, value);
     case type_date:
-        return snprintf_date(buffer, bufsz, freq, nbytes, value);
+        return snprintf_date(buffer, bufsz, val_freq, nbytes, value);
     case type_string:
         return snprintf_string(buffer, bufsz, nbytes, value);
     default:
-        print_error("Cannot print value of type %s(%d).", _find_type_text(obj_type), obj_type);
+        print_error("Cannot print value of type %s(%d).", _find_type_text(val_type), val_type);
     }
     return 0;
 }
