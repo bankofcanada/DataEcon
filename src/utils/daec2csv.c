@@ -132,27 +132,37 @@ int export_series(const object_t *object)
              );
     write_line(&M, buffer);
 
+    const int64_t length = tseries.axis.length;
+    if (length > 0)
     {
-        frequency_t freq = tseries.axis.frequency;
+        const frequency_t freq = tseries.axis.frequency;
         date_t date = tseries.axis.first;
-        int64_t elbytes = tseries.nbytes / tseries.axis.length;
-        type_t eltype = tseries.eltype;
-        frequency_t elfreq = tseries.elfreq;
-        const int8_t *valptr = (const int8_t *)tseries.value;
+        const int64_t elbytes = tseries.nbytes / length;
+        const type_t eltype = tseries.eltype;
+        const frequency_t elfreq = tseries.elfreq;
+        const uint8_t *valptr = (const uint8_t *)tseries.value;
+        char sdate[1024], sval[1024];
+        const uint8_t *strvec[tseries.axis.length];
         if (eltype == type_string)
         {
-            print_error("Cannot handle series of eltype string");
-            return -1;
+            rc = de_unpack_strings(tseries.value, tseries.nbytes, (const char **)strvec, length);
+            if (rc != DE_SUCCESS)
+            {
+                print_de_error();
+                return rc;
+            }
+            valptr = strvec[0];
         }
-        char sdate[1024], sval[1024];
         for (int i = 0; i < tseries.axis.length; ++i, ++date)
         {
             snprintf_date(sdate, sizeof sdate, freq, sizeof date, &date);
             snprintf_value(sval, sizeof sval, eltype, elfreq, elbytes, valptr);
             snprintf(buffer, sizeof buffer, "\"%s\",\"%s\",%s\n", sdate, obj_name, sval);
             write_line(&D, buffer);
-            date += 1;
-            valptr += elbytes;
+            if (eltype == type_string)
+                valptr = strvec[i+1];
+            else 
+                valptr += elbytes;
         }
     }
 

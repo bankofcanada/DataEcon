@@ -312,7 +312,11 @@ bool _freq_is_ymd(frequency_t freq)
 
 int snprintf_date(char *restrict buffer, size_t bufsz, frequency_t freq, int64_t nbytes, const void *value)
 {
-    if ((date_fmt == date_fmt_ymd) || ((date_fmt == date_fmt_auto) && _freq_is_ymd(freq)))
+    if (freq == freq_unit || freq == freq_none)
+    {
+        return  snprintf(buffer, bufsz, "%" PRId64, *(int64_t *)value );
+    } 
+    else if ((date_fmt == date_fmt_ymd) || ((date_fmt == date_fmt_auto) && _freq_is_ymd(freq)))
     {
         int32_t Y;
         uint32_t M, D;
@@ -333,10 +337,6 @@ int snprintf_date(char *restrict buffer, size_t bufsz, frequency_t freq, int64_t
             return 0;
         }
         return snprintf(buffer, bufsz, "%" PRId32 "-%02" PRIu32, Y, P);
-    }
-    else if (freq == freq_unit)
-    {
-        return snprintf(buffer, bufsz, "%" PRId64, *(int64_t *)value);
     }
     else
     {

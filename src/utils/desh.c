@@ -32,6 +32,7 @@ void print_version(FILE *F)
 const char *desh_prompt = "desh> ";
 
 static de_file workdb = NULL;
+static bool quit = false;
 
 void signal_int_handler(int signal)
 {
@@ -71,7 +72,7 @@ int main(int argc, char **argv)
 
     signal(SIGINT, signal_int_handler);
 
-    while (true)
+    while (!quit)
     {
         char *line = repl_read_command();
         if (line == NULL)
@@ -333,7 +334,8 @@ void print_help(FILE *F)
 {
     fprintf(F, "%s - %s\n", "help", "show this message");
     fprintf(F, "%s - %s\n", "version", "show version information");
-    fprintf(F, "%s - %s\n", "list", "list work database");
+    fprintf(F, "%s - %s\n", "quit", "stop reading and interpreting user input and exit");
+    fprintf(F, "%s - %s\n", "list", "list objects in the database");
     fprintf(F, "%s - %s\n", "display name", "display named object");
     fprintf(F, "%s - %s\n", "delete name", "delete named object");
     fprintf(F, "%s - %s\n", "scalar type name = value", "create new scalar object of the given type, name and value");
@@ -343,6 +345,12 @@ void print_help(FILE *F)
 void repl_execute(char *command_line)
 {
     char *command = strtok(command_line, " ");
+
+    if (strcmp(command, "quit") == 0)
+    {
+        quit = true;
+        return;
+    }
 
     if (strcmp(command, "help") == 0)
     {
