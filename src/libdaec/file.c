@@ -119,7 +119,7 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
     case stmt_new_axis:
         return "INSERT INTO `axes` (`ax_type`, `length`, `frequency`, `data`) VALUES (?,?,?,?);";
     case stmt_find_object:
-        return "SELECT `id`, `pid`, `class`, `type`, `name` FROM `objects` WHERE `pid` = ? AND `name` = ?;";
+        return "SELECT `id` FROM `objects` WHERE `pid` = ? AND `name` = ?;";
     case stmt_find_fullpath:
         return "SELECT `id` from `objects_info` WHERE `fullpath` = ?;";
     case stmt_find_axis:
@@ -146,6 +146,8 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
                "WHERE `o`.`id` = ?2 GROUP BY `o`.`id`;";
     case stmt_get_object_info:
         return "SELECT `fullpath`, `depth`, `created` FROM `objects_info` WHERE `id` = ?;";
+    case stmt_count_objects:
+        return "SELECT COUNT(*) from `objects` WHERE `pid` = ?;";
     default:
         error1(DE_INTERNAL, "invalid stmt_name");
         return NULL;

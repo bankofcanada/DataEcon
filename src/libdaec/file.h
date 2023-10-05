@@ -52,6 +52,7 @@ typedef enum stmt_name
     stmt_get_attribute,
     stmt_get_all_attributes,
     stmt_get_object_info,
+    stmt_count_objects,
     stmt_size,             /* sentinel, gives us the number of statements */
     stmt_last = stmt_size, /* alias, for readability */
 } stmt_name_t;

@@ -31,7 +31,7 @@ int sql_find_object(de_file de, obj_id_t pid, const char *name, obj_id_t *id)
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, pid));
     CHECK_SQLITE(sqlite3_bind_text(stmt, 2, name, -1, SQLITE_TRANSIENT));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         if (id)
@@ -61,7 +61,7 @@ int sql_load_object(de_file de, obj_id_t id, object_t *object)
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         _fill_object(stmt, object);
@@ -145,7 +145,7 @@ int sql_get_attribute(de_file de, int64_t id, const char *name, const char **val
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
     CHECK_SQLITE(sqlite3_bind_text(stmt, 2, name, -1, SQLITE_TRANSIENT));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         if (value != NULL)
@@ -169,7 +169,7 @@ int sql_get_all_attributes(de_file de, obj_id_t id, const char *delim,
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_text(stmt, 1, delim, -1, SQLITE_TRANSIENT));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 2, id));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         count = sqlite3_column_int64(stmt, 0);
@@ -195,7 +195,7 @@ int sql_get_object_info(de_file de, obj_id_t id, const char **fullpath, int64_t 
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         if (fullpath)
@@ -220,7 +220,7 @@ int sql_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_text(stmt, 1, fullpath, -1, SQLITE_TRANSIENT));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         *id = sqlite3_column_int64(stmt, 0);
@@ -271,7 +271,7 @@ int sql_load_scalar_value(de_file de, obj_id_t id, scalar_t *scalar)
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         _fill_scalar(stmt, scalar);
@@ -295,7 +295,7 @@ int sql_load_axis(de_file de, axis_id_t id, axis_t *axis)
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         axis->id = id;
@@ -339,7 +339,7 @@ int sql_find_axis(de_file de, axis_t *axis)
     CHECK_SQLITE(sqlite3_bind_int(stmt, 3, axis->frequency));
     while (1)
     {
-        switch (rc = sqlite3_step(stmt))
+        switch ((rc = sqlite3_step(stmt)))
         {
         case SQLITE_ROW:
             switch (axis->ax_type)
@@ -409,8 +409,8 @@ int sql_new_axis(de_file de, axis_t *axis)
 /**************************************************************/
 /* tseries */
 
-int sql_store_tseries_value(de_file de, obj_id_t id, 
-                            type_t eltype, frequency_t elfreq, 
+int sql_store_tseries_value(de_file de, obj_id_t id,
+                            type_t eltype, frequency_t elfreq,
                             axis_id_t axis_id, int64_t nbytes,
                             const void *value)
 {
@@ -455,7 +455,7 @@ int sql_load_tseries_value(de_file de, obj_id_t id, tseries_t *tseries)
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         _fill_tseries(stmt, tseries);
@@ -471,8 +471,8 @@ int sql_load_tseries_value(de_file de, obj_id_t id, tseries_t *tseries)
 /**************************************************************/
 /* mvtseries */
 
-int sql_store_mvtseries_value(de_file de, obj_id_t id, 
-                              type_t eltype,frequency_t elfreq,
+int sql_store_mvtseries_value(de_file de, obj_id_t id,
+                              type_t eltype, frequency_t elfreq,
                               axis_id_t axis1_id, axis_id_t axis2_id,
                               int64_t nbytes, const void *value)
 {
@@ -519,7 +519,7 @@ int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries)
     int rc;
     CHECK_SQLITE(sqlite3_reset(stmt));
     CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
-    switch (rc = sqlite3_step(stmt))
+    switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
         _fill_mvtseries(stmt, mvtseries);
@@ -531,4 +531,20 @@ int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries)
     default:
         return rc_error(rc);
     }
+}
+
+int sql_count_objects(de_file de, obj_id_t pid, int64_t *count)
+{
+    sqlite3_stmt *stmt = _get_statement(de, stmt_count_objects);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, pid));
+    if (SQLITE_ROW == (rc = sqlite3_step(stmt)))
+    {
+        *count = sqlite3_column_int64(stmt, 0);
+        return DE_SUCCESS;
+    }
+    return rc_error(rc);
 }

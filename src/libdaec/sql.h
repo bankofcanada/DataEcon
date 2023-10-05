@@ -72,4 +72,7 @@ int sql_store_mvtseries_value(de_file de, obj_id_t id, type_t eltype, frequency_
 /* load a row from the tseries table with the given id */
 int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries);
 
+/* count objects in a catalog */
+int sql_count_objects(de_file de, obj_id_t pid, int64_t *count);
+
 #endif

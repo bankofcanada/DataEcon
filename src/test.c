@@ -271,11 +271,27 @@ int main(void)
     CHECK(de_new_catalog(de, 0, "hello/world", &id), DE_BAD_NAME);
 
     {
+        int64_t count;
+        CHECK(de_catalog_size(NULL, 0, &count), DE_NULL);
+        CHECK(de_catalog_size(de, 0, NULL), DE_NULL);
+        CHECK_SUCCESS(de_catalog_size(de, 0, &count));
+        FAIL_IF(count != 1, "catalog size");
+    }
+
+    {
         /* nested catalogs */
         int64_t id_hello, id_world, id_super;
         CHECK_SUCCESS(de_new_catalog(de, 0, "hello", &id_hello));
         CHECK_SUCCESS(de_new_catalog(de, id_hello, "world", &id_world));
         CHECK_SUCCESS(de_new_catalog(de, id_world, "super", &id_super));
+
+        int64_t count;
+        CHECK_SUCCESS(de_catalog_size(de, id_hello, &count));
+        FAIL_IF(count != 1, "catalog size of hello");
+        CHECK_SUCCESS(de_catalog_size(de, id_world, &count));
+        FAIL_IF(count != 1, "catalog size of world");
+        CHECK_SUCCESS(de_catalog_size(de, id_super, &count));
+        FAIL_IF(count != 0, "catalog size of super");
 
         const char *fp;
         int64_t depth;

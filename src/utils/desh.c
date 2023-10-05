@@ -26,7 +26,7 @@ void repl_execute(char *command);
 
 void print_version(FILE *F)
 {
-    fprintf(F, "DataEcon SHell (desh) %s using DataEcon Library (libdaec) %s\n", DESH_VERSION, de_version());
+    fprintf(F, "DataEcon SHell version (desh) %s using DataEcon Library version (libdaec) %s\n", DESH_VERSION, de_version());
 }
 
 const char *desh_prompt = "desh> ";
