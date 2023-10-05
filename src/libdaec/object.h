@@ -58,6 +58,8 @@ typedef struct
     class_t obj_class;
     type_t obj_type;
     const char *name;
+    /* when object instance is created by one of the de_load_xyz the memory for name
+   is managed by the library and is valid until the next library call */
 } object_t;
 
 /* find object id from parent and name */
@@ -73,14 +75,17 @@ int de_delete_object(de_file de, obj_id_t id);
 int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *value);
 
 /* get attribute by name */
+/* memory for value is handled by the library and is valid until the next library call */
 int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **value);
 
-/* get all attributes in a single string with format '"name"="value"' separated by `delim` */
+/* get all attribute names and values, each in a single string, delimited by `delim` */
+/* memory for names and values is handled by the library and is valid until the next library call */
 int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
                           int64_t *nattr, const char **names, const char **values);
 
 /* get the full path of an object from its id */
-int de_get_object_info(de_file, obj_id_t id,
+/* memory for fullpath is handled by the library and is valid until the next library call */
+int de_get_object_info(de_file de, obj_id_t id,
                        const char **fullpath, int64_t *depth, int64_t *created);
 
 /* get the id of an object from its fullpath */
@@ -98,6 +103,5 @@ bool _check_name(const char *name);
 bool check_scalar_type(type_t type);
 bool check_tseries_type(type_t type);
 bool check_mvtseries_type(type_t type);
-
 
 #endif

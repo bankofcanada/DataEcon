@@ -17,7 +17,7 @@ extern "C"
 {
 #endif
 
-    /* return the library version as a string in "x.y.z" format */
+    /* return the library version as a static string in "x.y.z" format */
     const char *de_version(void);
 
     /* ***************************** error *************************************** */
@@ -124,6 +124,8 @@ extern "C"
         class_t obj_class;
         type_t obj_type;
         const char *name;
+        /* when object instance is created by one of the de_load_xyz the memory for name
+       is managed by the library and is valid until the next library call */
     } object_t;
 
     /* find object id from parent and name */
@@ -139,13 +141,16 @@ extern "C"
     int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *value);
 
     /* get attribute by name */
+    /* memory for value is handled by the library and is valid until the next library call */
     int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **value);
 
-    /* get all attributes in a single string with format '"name"="value"' separated by `delim` */
+    /* get all attribute names and values, each in a single string, delimited by `delim` */
+    /* memory for names and values is handled by the library and is valid until the next library call */
     int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
                               int64_t *nattr, const char **names, const char **values);
 
     /* get the full path of an object from its id */
+    /* memory for fullpath is handled by the library and is valid until the next library call */
     int de_get_object_info(de_file de, obj_id_t id,
                            const char **fullpath, int64_t *depth, int64_t *created);
 
@@ -232,7 +237,9 @@ extern "C"
         object_t object;
         frequency_t frequency;
         int64_t nbytes;
-        const void *value; /* we don't manage the memory for the value */
+        const void *value;
+        /* when scalar instance is created by a call to de_load_scalar the memory for value
+        is managed by the library and is valid until the next library call */
     } scalar_t;
 
     /* create a new scalar object in a given parent catalog */
@@ -282,7 +289,9 @@ extern "C"
         frequency_t elfreq;
         axis_t axis;
         int64_t nbytes;
-        const void *value; /* we don't manage the memory for the value */
+        const void *value;
+        /* when tseries instance is created by a call to de_load_tseries the memory for value
+        is managed by the library and is valid until the next library call */
     } tseries_t;
     typedef tseries_t vector_t;
 
@@ -305,7 +314,9 @@ extern "C"
         axis_t axis1;
         axis_t axis2;
         int64_t nbytes;
-        const void *value; /* we don't manage the memory for the value */
+        const void *value;
+        /* when mvtseries instance is created by a call to de_load_mvtseries the memory for value
+        is managed by the library and is valid until the next library call */
     } mvtseries_t;
     typedef mvtseries_t matrix_t;
 
