@@ -39,6 +39,12 @@ extern "C"
     date_fmt_t get_date_fmt();
     date_fmt_t set_date_fmt(date_fmt_t date_fmt);
 
+    int escape_string(char *buffer, size_t bufsz, const char *string);
+    int unescape_string(char *buffer, size_t bufsz, const char *string);
+
+    /* find the id of an object given by name, which may be simple name (in root) or full name (starting with '/') */
+    obj_id_t find_object_id(de_file de, const char *name);
+
 #ifdef __cplusplus
 }
 #endif

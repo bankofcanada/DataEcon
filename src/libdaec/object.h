@@ -91,6 +91,9 @@ int de_get_object_info(de_file de, obj_id_t id,
 /* get the id of an object from its fullpath */
 int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id);
 
+/* count the number of objects immediately in the given catalog */
+int de_catalog_size(de_file de, obj_id_t pid, int64_t *count);
+
 /* ========================================================================= */
 /* internal */
 

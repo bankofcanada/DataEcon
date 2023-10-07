@@ -133,3 +133,13 @@ int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
     }
     return DE_SUCCESS;
 }
+
+int de_catalog_size(de_file de, obj_id_t pid, int64_t *count)
+{
+    if (de == NULL || count == NULL)
+        return error(DE_NULL);
+    TRACE_RUN(sql_count_objects(de, pid, count));
+    if (pid == 0)
+        *count -= 1;
+    return DE_SUCCESS;
+}

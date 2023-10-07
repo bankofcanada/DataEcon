@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 #include "common.h"
 
@@ -18,6 +19,7 @@ struct frequencies_map
 
 static struct frequencies_map FREQUENCIES_MAP[] = {
     {freq_none, "none"},
+    {freq_unit, "unit"},
     {freq_daily, "daily"},
     {freq_bdaily, "bdaily"},
     {freq_weekly, "weekly"},
@@ -67,31 +69,26 @@ static struct frequencies_map FREQUENCIES_MAP[] = {
     {freq_yearly_sep, "yearly_sep"},
     {freq_yearly_oct, "yearly_oct"},
     {freq_yearly_nov, "yearly_nov"},
-    {freq_yearly_dec, "yearly_dec"},
-    {-1, NULL}};
+    {freq_yearly_dec, "yearly_dec"}};
 
 int _find_frequency_code(const char *text)
 {
-    int i = 0;
-    while (true)
-    {
-        struct frequencies_map *F = &FREQUENCIES_MAP[i];
-        if (F->freq_name == NULL || strcmp(text, F->freq_name) == 0)
+    const size_t nfreqs = sizeof FREQUENCIES_MAP / sizeof FREQUENCIES_MAP[0];
+    struct frequencies_map *F = FREQUENCIES_MAP;
+    for (int i = 0; i < nfreqs; ++i, ++F)
+        if (strcmp(text, F->freq_name) == 0)
             return F->freq_code;
-        i += 1;
-    }
+    return -1;
 }
 
 const char *_find_frequency_text(frequency_t freq)
 {
-    int i = 0;
-    while (true)
-    {
-        struct frequencies_map *F = &FREQUENCIES_MAP[i];
-        if (F->freq_code == -1 || F->freq_code == freq)
+    const size_t nfreqs = sizeof FREQUENCIES_MAP / sizeof FREQUENCIES_MAP[0];
+    struct frequencies_map *F = FREQUENCIES_MAP;
+    for (int i = 0; i < nfreqs; ++i, ++F)
+        if (F->freq_code == freq)
             return F->freq_name;
-        i += 1;
-    }
+    return NULL;
 }
 
 /****************************************************************************/
@@ -118,30 +115,25 @@ static struct types_map TYPES_MAP[] = {
     {type_matrix, "matrix"},
     {type_mvtseries, "mvtseries"},
     {type_other_2d, "other_2d"},
-    {type_any, "any"},
-    {-1, NULL}};
+    {type_any, "any"}};
 
 int _find_type_code(const char *text)
 {
-    int i = 0;
-    while (true)
-    {
-        struct types_map *T = &TYPES_MAP[i];
-        if (T->type_name == NULL || strcmp(text, T->type_name) == 0)
+    const size_t ntypes = sizeof TYPES_MAP / sizeof TYPES_MAP[0];
+    struct types_map *T = TYPES_MAP;
+    for (int i = 0; i < ntypes; ++i, ++T)
+        if (strcmp(text, T->type_name) == 0)
             return T->type_code;
-        i += 1;
-    }
+    return -1;
 }
 const char *_find_type_text(type_t obj_type)
 {
-    int i = 0;
-    while (true)
-    {
-        struct types_map *T = &TYPES_MAP[i];
-        if (T->type_code == -1 || T->type_code == obj_type)
+    const size_t ntypes = sizeof TYPES_MAP / sizeof TYPES_MAP[0];
+    struct types_map *T = TYPES_MAP;
+    for (int i = 0; i < ntypes; ++i, ++T)
+        if (obj_type == T->type_code)
             return T->type_name;
-        i += 1;
-    }
+    return NULL;
 }
 
 /****************************************************************************/
@@ -156,37 +148,33 @@ static struct classes_map CLASSES_MAP[] = {
     {class_scalar, "scalar"},
     {class_tseries, "tseries"},
     {class_mvtseries, "mvtseries"},
-    {class_any, "any"},
-    {-1, NULL}};
+    {class_any, "any"}};
 
 int _find_class_code(const char *text)
 {
-    int i = 0;
-    while (true)
-    {
-        struct classes_map *C = &CLASSES_MAP[i];
-        if (C->class_name == NULL || strcmp(text, C->class_name) == 0)
+    const size_t nclasses = sizeof CLASSES_MAP / sizeof CLASSES_MAP[0];
+    struct classes_map *C = CLASSES_MAP;
+    for (int i = 0; i < nclasses; ++i, ++C)
+        if (strcmp(text, C->class_name) == 0)
             return C->class_code;
-        i += 1;
-    }
+    return -1;
 }
 const char *_find_class_text(class_t obj_class)
 {
-    int i = 0;
-    while (true)
-    {
-        struct classes_map *C = &CLASSES_MAP[i];
-        if (C->class_code == -1 || C->class_code == obj_class)
+    const size_t nclasses = sizeof CLASSES_MAP / sizeof CLASSES_MAP[0];
+    struct classes_map *C = CLASSES_MAP;
+    for (int i = 0; i < nclasses; ++i, ++C)
+        if (obj_class == C->class_code)
             return C->class_name;
-        i += 1;
-    }
+    return NULL;
 }
 
 /****************************************************************************/
 
 const char *_eltype_text(type_t eltype, frequency_t elfreq)
 {
-    if (eltype != type_date) {
+    if (eltype != type_date)
+    {
         return _find_type_text(eltype);
     }
     static char foobar[100];
@@ -277,9 +265,9 @@ int snprintf_float(char *restrict buffer, size_t bufsz, int64_t nbytes, const vo
     switch (nbytes)
     {
     case 8:
-        return snprintf(buffer, bufsz, "%lg", *(double *)value);
+        return snprintf(buffer, bufsz, "%.17lg", *(double *)value);
     case 4:
-        return snprintf(buffer, bufsz, "%g", *(float *)value);
+        return snprintf(buffer, bufsz, "%.8g", *(float *)value);
     default:
         print_error("Cannot print a floating point number with %" PRId64 " bytes.\n", nbytes);
     }
@@ -314,8 +302,8 @@ int snprintf_date(char *restrict buffer, size_t bufsz, frequency_t freq, int64_t
 {
     if (freq == freq_unit || freq == freq_none)
     {
-        return  snprintf(buffer, bufsz, "%" PRId64, *(int64_t *)value );
-    } 
+        return snprintf(buffer, bufsz, "%" PRId64, *(int64_t *)value);
+    }
     else if ((date_fmt == date_fmt_ymd) || ((date_fmt == date_fmt_auto) && _freq_is_ymd(freq)))
     {
         int32_t Y;
@@ -347,7 +335,209 @@ int snprintf_date(char *restrict buffer, size_t bufsz, frequency_t freq, int64_t
 
 int snprintf_string(char *restrict buffer, size_t bufsz, int64_t nbytes, const void *value)
 {
-    return snprintf(buffer, bufsz, "\"%s\"", (char *)value);
+    size_t len = escape_string(buffer + 1, bufsz - 2, value);
+    if (len <= 0)
+        return 0;
+    buffer[0] = '\"';
+    buffer[len + 1] = '\"';
+    buffer[len + 2] = '\0';
+    return len + 2;
+    // return snprintf(buffer, bufsz, "\"%s\"", (char *)value);
 }
 
 /****************************************************************************/
+
+size_t escape_char(char *b, size_t len, char c)
+// return number of characters written in b
+// if we need more than len-1 characters to escape c then we return 0 and write '\0' in b[0]
+// we assume len > 0
+{
+    if (len < 2 || c == 0)
+    {
+        // no room to write anything, or we're done
+        b[0] = 0;
+        return 0;
+    }
+    if (isprint(c) && (strchr("\'\"\\\?", c) == NULL))
+    {
+        // printable characters that don't need to be escaped
+        b[0] = c;
+        return 1;
+    }
+    // c must be escaped - do we have enough room
+    if (len < 3)
+    {
+        b[0] = 0;
+        return 0;
+    }
+    switch (c)
+    {
+    case '\a':
+        b[0] = '\\';
+        b[1] = 'a';
+        return 2;
+    case '\b':
+        b[0] = '\\';
+        b[1] = 'b';
+        return 2;
+    case '\n':
+        b[0] = '\\';
+        b[1] = 'n';
+        return 2;
+    case '\t':
+        b[0] = '\\';
+        b[1] = 't';
+        return 2;
+    case '\f':
+        b[0] = '\\';
+        b[1] = 'f';
+        return 2;
+    case '\r':
+        b[0] = '\\';
+        b[1] = 'r';
+        return 2;
+    case '\v':
+        b[0] = '\\';
+        b[1] = 'v';
+        return 2;
+    case '\\':
+        b[0] = '\\';
+        b[1] = '\\';
+        return 2;
+    case '\'':
+        b[0] = '\\';
+        b[1] = '\'';
+        return 2;
+    case '\"':
+        b[0] = '\\';
+        b[1] = '\"';
+        return 2;
+    case '\?':
+        b[0] = '\\';
+        b[1] = '?';
+        return 2;
+    }
+    // don't know what this is - we'll print it is \xFF
+    if (len < 5)
+    {
+        b[0] = 0;
+        return 0;
+    }
+    snprintf(b, len, "\\x%02X", c);
+    return 4;
+}
+
+int escape_string(char *buffer, size_t bufsz, const char *string)
+{
+    size_t len, total;
+    total = 0;
+    if (bufsz == 0)
+    {
+        return -1;
+    }
+    while ((len = escape_char(buffer, bufsz, *string)) > 0)
+    {
+        ++string;
+        buffer += len;
+        bufsz -= len;
+        total += len;
+    }
+    return *string == 0 ? total : -1;
+}
+
+size_t unescape_char(char *c, const char *str)
+// return number of characters consumed from str
+{
+    int ret;
+    if (str[0] == '\\')
+    {
+        switch (str[1])
+        {
+        case '0':
+            *c = '\0';
+            return 2;
+        case 'a':
+            *c = '\a';
+            return 2;
+        case 'b':
+            *c = '\b';
+            return 2;
+        case 'n':
+            *c = '\n';
+            return 2;
+        case 't':
+            *c = '\t';
+            return 2;
+        case 'f':
+            *c = '\f';
+            return 2;
+        case 'r':
+            *c = '\r';
+            return 2;
+        case 'v':
+            *c = '\v';
+            return 2;
+        case '\\':
+            *c = '\\';
+            return 2;
+        case '\'':
+            *c = '\'';
+            return 2;
+        case '\"':
+            *c = '\"';
+            return 2;
+        case '\?':
+            *c = '\?';
+            return 2;
+        case 'x':
+            ret = sscanf(str + 2, "%2hhX", (unsigned char *)c);
+            if (ret == 0 || ret == EOF)
+            {
+                print_error("Failed to parse the escape sequence %c%c%c%c.", str[0], str[1], str[2], str[3]);
+                return 0;
+            }
+            return 4;
+        default:
+            print_error("Unrecognized escape sequence %c%c.", str[0], str[1]);
+            return 0;
+        }
+    }
+    *c = str[0];
+    return 1;
+}
+
+int unescape_string(char *buffer, size_t bufsz, const char *string)
+{
+    size_t len, total;
+    if (bufsz == 0)
+    {
+        return -1;
+    }
+    total = 0;
+    while (((len = unescape_char(buffer, string)) > 0) && (*string))
+    {
+        ++buffer;
+        string += len;
+        ++total;
+    }
+    return len > 0 ? total : -1;
+}
+
+/****************************************************************************/
+
+obj_id_t find_object_id(de_file de, const char *name)
+{
+    int rc;
+    obj_id_t id;
+    if (name[0] == '/')
+        rc = de_find_fullpath(de, name, &id);
+    else
+        rc = de_find_object(de, 0, name, &id);
+    if (rc != DE_SUCCESS)
+    {
+        print_de_error();
+        return -1;
+    }
+    return id;
+}
+
