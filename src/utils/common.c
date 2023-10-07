@@ -265,9 +265,9 @@ int snprintf_float(char *restrict buffer, size_t bufsz, int64_t nbytes, const vo
     switch (nbytes)
     {
     case 8:
-        return snprintf(buffer, bufsz, "%lg", *(double *)value);
+        return snprintf(buffer, bufsz, "%.17lg", *(double *)value);
     case 4:
-        return snprintf(buffer, bufsz, "%g", *(float *)value);
+        return snprintf(buffer, bufsz, "%.8g", *(float *)value);
     default:
         print_error("Cannot print a floating point number with %" PRId64 " bytes.\n", nbytes);
     }
