@@ -317,7 +317,7 @@ int sql_load_axis(de_file de, axis_id_t id, axis_t *axis)
             axis->names = (const char *)sqlite3_column_text(stmt, 4);
             break;
         default:
-            return error(DE_BAD_OBJ);
+            return error(DE_BAD_AXIS_TYPE);
         }
         return DE_SUCCESS;
     case SQLITE_DONE:
