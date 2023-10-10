@@ -15,10 +15,8 @@ for reading and writing time series data in Julia.
 From Julia simply install the
 [TimeSeriesEcon](https://github.com/bankofcanada/TimeSeriesEcon.jl) package.
 
-> **NOTE** that `DataEcon` is not yet part of an official release of
-> `TimeSeriesEcon`. You can give it a try from the `dataecon` branch like this:
 > ```julia
-> ] add TimeSeriesEcon#dataecon 
+> ] add TimeSeriesEcon
 > ```
 
 In `TimeSeriesEcon` you will find the sub-module `DataEcon`.
@@ -61,7 +59,7 @@ Alternatively, you can simply download precompiled binaries for your machine fro
 
 ### Example
 
-To build your own executable, compile it with `#include "src/daec.h"`, and link it against the `bin/libdaec.so` library.  
+To build your own executable, compile it with `#include "include/daec.h"`, and link it against `lib/libdaec.so` library.  
 
 For example:
 ```C
@@ -124,4 +122,3 @@ bash$ gcc -I ./include -L lib -Wl,-rpath,$(pwd)/lib -ldaec example.c -o example
 bash$ ./example
 Hello World
 ```
-
