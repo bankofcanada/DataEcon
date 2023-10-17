@@ -92,7 +92,7 @@ endif
 
 DAEC2CSV = bin/daec2csv
 DAEC2CSV_SRC_C = src/utils/daec2csv.c
-DAEC2CSV_SRC_O =  $(patsubst %.cc,$(CACHEDIR)/%.o,$(notdir $(DAEC2CSV_SRC_C)))
+DAEC2CSV_SRC_O =  $(patsubst %.c,$(CACHEDIR)/%.o,$(notdir $(DAEC2CSV_SRC_C)))
 DAEC2CSV_LDFLAGS = -Wl,-rpath,$(abspath $(dir $(LIBDE))) -L lib -ldaec
 ifeq ($(HAVE_ZLIB),yes)
 	DAEC2CSV_CFLAGS += -DHAVE_ZLIB
