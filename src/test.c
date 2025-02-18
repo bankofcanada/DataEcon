@@ -715,6 +715,52 @@ int main(void)
         CHECK_MVTSERIES(data, _id, type_mvtseries, type_float, freq_none, sizeof values[0][0], ax1, ax2, values);
     }
 
+    /* test ndtseries */
+    {
+
+        CHECK_SUCCESS(de_open(fname, &de));
+
+        obj_id_t cata;
+        CHECK_SUCCESS(de_new_catalog(de, 0, "nd", &cata));
+
+        axis_id_t ax[10];
+        obj_id_t _id;
+        ndtseries_t data;
+
+        CHECK(de_store_ndtseries(de, cata, "fail", type_integer, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_tseries, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_mvtseries, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_none, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE_NONE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_tseries, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_date, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE_DATE);
+
+        CHECK(de_store_ndtseries(NULL, cata, "fail", type_tensor, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_NULL);
+        CHECK(de_store_ndtseries(de, cata, NULL, type_tensor, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_NULL);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_tensor, type_integer, freq_none, 0, NULL, 0, NULL, &_id), DE_NULL);
+
+        CHECK(de_store_ndtseries(de, cata, "fail", type_tensor, type_integer, freq_none, 10, ax, 0, NULL, &_id), DE_BAD_NUM_AXES);
+
+        CHECK(de_load_ndtseries(NULL, _id, &data), DE_NULL);
+        CHECK(de_load_ndtseries(de, _id, NULL), DE_NULL);
+        CHECK(de_load_ndtseries(de, cata, &data), DE_BAD_CLASS);
+
+        double values[3][2][1] = {{{1}, {2}}, {{3}, {4}}, {{5}, {6}}};
+        CHECK_SUCCESS(de_axis_plain(de, 1, &ax[0]));
+        CHECK_SUCCESS(de_axis_plain(de, 2, &ax[1]));
+        CHECK_SUCCESS(de_axis_plain(de, 3, &ax[2]));
+        CHECK_SUCCESS(de_store_ndtseries(de, cata, "onetwothree", type_tensor,
+                                         type_float, freq_none, 3, ax,
+                                         sizeof values, values, &_id));
+        CHECK_SUCCESS(de_load_ndtseries(de, _id, &data));
+        CHECK_NDTSERIES(data, _id, type_tensor, type_float, freq_none, sizeof values[0][0][0], 3, ax, values);
+        ax[3] = ax[0];
+        CHECK_SUCCESS(de_store_ndtseries(de, cata, "onetwothreeone", type_tensor,
+                                         type_float, freq_none, 4, ax,
+                                         sizeof values, values, &_id));
+        CHECK_SUCCESS(de_load_ndtseries(de, _id, &data));
+        CHECK_NDTSERIES(data, _id, type_tensor, type_float, freq_none, sizeof values[0][0][0], 4, ax, values);
+    }
+
     /* test search and list */
     {
         CHECK_SUCCESS(de_finalize_search(NULL)); // harmless no-op
@@ -838,52 +884,6 @@ int main(void)
         CHECK_SUCCESS(de_list_catalog(de, 0, &search));
         CHECK(de_next_object(search, &obj), DE_NO_OBJ);
         CHECK_SUCCESS(de_finalize_search(search));
-    }
-
-    /* test ndtseries */
-    {
-
-        CHECK_SUCCESS(de_open(fname, &de));
-
-        obj_id_t cata;
-        CHECK_SUCCESS(de_new_catalog(de, 0, "nd", &cata));
-
-        axis_id_t ax[10];
-        obj_id_t _id;
-        ndtseries_t data;
-
-        CHECK(de_store_ndtseries(de, cata, "fail", type_integer, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
-        CHECK(de_store_ndtseries(de, cata, "fail", type_tseries, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
-        CHECK(de_store_ndtseries(de, cata, "fail", type_mvtseries, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
-        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_none, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE_NONE);
-        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_tseries, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE);
-        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_date, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE_DATE);
-
-        CHECK(de_store_ndtseries(NULL, cata, "fail", type_tensor, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_NULL);
-        CHECK(de_store_ndtseries(de, cata, NULL, type_tensor, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_NULL);
-        CHECK(de_store_ndtseries(de, cata, "fail", type_tensor, type_integer, freq_none, 0, NULL, 0, NULL, &_id), DE_NULL);
-
-        CHECK(de_store_ndtseries(de, cata, "fail", type_tensor, type_integer, freq_none, 10, ax, 0, NULL, &_id), DE_BAD_NUM_AXES);
-
-        CHECK(de_load_ndtseries(NULL, _id, &data), DE_NULL);
-        CHECK(de_load_ndtseries(de, _id, NULL), DE_NULL);
-        CHECK(de_load_ndtseries(de, cata, &data), DE_BAD_CLASS);
-
-        double values[3][2][1] = {{{1}, {2}}, {{3}, {4}}, {{5}, {6}}};
-        CHECK_SUCCESS(de_axis_plain(de, 1, &ax[0]));
-        CHECK_SUCCESS(de_axis_plain(de, 2, &ax[1]));
-        CHECK_SUCCESS(de_axis_plain(de, 3, &ax[2]));
-        CHECK_SUCCESS(de_store_ndtseries(de, cata, "onetwothree", type_tensor,
-                                         type_float, freq_none, 3, ax,
-                                         sizeof values, values, &_id));
-        CHECK_SUCCESS(de_load_ndtseries(de, _id, &data));
-        CHECK_NDTSERIES(data, _id, type_tensor, type_float, freq_none, sizeof values[0][0][0], 3, ax, values);
-        ax[3] = ax[0];
-        CHECK_SUCCESS(de_store_ndtseries(de, cata, "onetwothreeone", type_tensor,
-                                         type_float, freq_none, 4, ax,
-                                         sizeof values, values, &_id));
-        CHECK_SUCCESS(de_load_ndtseries(de, _id, &data));
-        CHECK_NDTSERIES(data, _id, type_tensor, type_float, freq_none, sizeof values[0][0][0], 4, ax, values);
     }
 
     CHECK_SUCCESS(de_close(de));
