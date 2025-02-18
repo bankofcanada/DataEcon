@@ -718,8 +718,6 @@ int main(void)
     /* test ndtseries */
     {
 
-        CHECK_SUCCESS(de_open(fname, &de));
-
         obj_id_t cata;
         CHECK_SUCCESS(de_new_catalog(de, 0, "nd", &cata));
 
