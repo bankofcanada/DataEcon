@@ -90,11 +90,33 @@ int _init_file(de_file de)
             "   FOREIGN KEY (`axis2_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT"
             ") STRICT;");
     RUN_SQL(de,
+            "CREATE TABLE `ndaxes` ("
+            "   `obj_id` INTEGER NOT NULL,"
+            "   `axis_index` INTEGER NOT NULL," 
+            "   `axis_id` INTEGER NOT NULL,"
+            "   PRIMARY KEY (`obj_id`, `axis_index`) ON CONFLICT REPLACE,"
+            "   FOREIGN KEY (`obj_id`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
+            "   FOREIGN KEY (`axis_id`) REFERENCES `axes` (`id`) ON DELETE RESTRICT"
+            ") STRICT, WITHOUT ROWID;"
+            "");
+    RUN_SQL(de,
+            "CREATE TABLE `ndtseries` ("
+            "   `id` INTEGER PRIMARY KEY,"
+            "   `eltype` INTEGER NOT NULL,"
+            "   `elfreq` INTEGER NOT NULL,"
+            "   `value` BLOB,"
+            "   FOREIGN KEY (`id`) REFERENCES `objects` (`id`) ON DELETE CASCADE"
+            ") STRICT;");
+    RUN_SQL(de,
             "INSERT INTO `objects` (`id`, `pid`, `class`, `type`, `name`)"
             "       VALUES (0, 0, 0, 0, '/');");
     RUN_SQL(de,
             "INSERT INTO `objects_info` (`id`, `created`, `depth`, `fullpath`)"
             "       VALUES (0, unixepoch('now'), 0, '');"
+            "");
+    RUN_SQL(de,
+            "INSERT INTO `attributes` (`id`, `name`, `value`)"
+            "       VALUES (0, 'DE_VERSION', '" DE_VERSION "');"
             "");
 
     return DE_SUCCESS;
@@ -116,6 +138,10 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
         return "INSERT INTO `tseries` (`id`, `eltype`, `elfreq`, `axis_id`, `value`) VALUES (?,?,?,?,?);";
     case stmt_store_mvtseries:
         return "INSERT INTO `mvtseries` (`id`, `eltype`, `elfreq`, `axis1_id`, `axis2_id`, `value`) VALUES (?,?,?,?,?,?);";
+    case stmt_store_ndtseries:
+        return "INSERT INTO `ndtseries` (`id`, `eltype`, `elfreq`, `value`) VALUES (?,?,?,?);";
+    case stmt_store_ndaxes:
+        return "INSERT INTO `ndaxes` (`obj_id`, `axis_index`, `axis_id`) VALUES (?,?,?);";
     case stmt_new_axis:
         return "INSERT INTO `axes` (`ax_type`, `length`, `frequency`, `data`) VALUES (?,?,?,?);";
     case stmt_find_object:
@@ -132,6 +158,12 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
         return "SELECT `id`, `eltype`, `elfreq`, `axis_id`, `value` FROM `tseries` WHERE `id` = ?;";
     case stmt_load_mvtseries:
         return "SELECT `id`, `eltype`, `elfreq`, `axis1_id`, `axis2_id`, `value` FROM `mvtseries` WHERE `id` = ?;";
+    case stmt_load_ndtseries:
+        return "SELECT `id`, `eltype`, `elfreq`, `value` FROM `ndtseries` WHERE `id` = ?;";
+    case stmt_load_ndaxes:
+        return "SELECT `axes`.*, `ndaxes`.`axis_index` "
+               "FROM `ndaxes` LEFT JOIN `axes` ON `ndaxes`.`axis_id` = `axes`.`id` "
+               "WHERE `ndaxes`.`obj_id` = ? ORDER BY `ndaxes`.`axis_index`";
     case stmt_load_axis:
         return "SELECT * FROM `axes` WHERE `id` = ?;";
     case stmt_delete_object:

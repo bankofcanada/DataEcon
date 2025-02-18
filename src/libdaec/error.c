@@ -138,7 +138,7 @@ int de_error(char *restrict msg, size_t len)
             snprintf(msg, len, fmt, code, "element type is type_none(0) for an object type other than range");
             break;
         case DE_BAD_ELTYPE_DATE:
-            snprintf(msg, len, fmt, code, "element type is date must have element frequency other than freq_none (0)");
+            snprintf(msg, len, fmt, code, "element type date must have element frequency other than freq_none (0)");
             break;
         case DE_BAD_NAME:
             snprintf(msg, len, fmt1, code, "invalid object name", last_error.arg);
@@ -181,6 +181,9 @@ int de_error(char *restrict msg, size_t len)
             break;
         case DE_RANGE:
             snprintf(msg, len, fmt, code, "value out of range");
+            break;
+        case DE_BAD_NUM_AXES:
+            snprintf(msg, len, fmt, code, "invalid number of axes");
             break;
         case DE_INTERNAL:
             snprintf(msg, len, fmt1, code, "internal error", last_error.arg);

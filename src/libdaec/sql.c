@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "object.h"
@@ -10,6 +11,7 @@
 #include "axis.h"
 #include "tseries.h"
 #include "mvtseries.h"
+#include "ndtseries.h"
 #include "sql.h"
 #include "misc.h"
 
@@ -287,6 +289,32 @@ int sql_load_scalar_value(de_file de, obj_id_t id, scalar_t *scalar)
 /******************************************************************/
 /* axis */
 
+int _fill_axis(sqlite3_stmt *stmt, axis_t *axis)
+{
+    axis->id = sqlite3_column_int64(stmt, 0);
+    axis->ax_type = sqlite3_column_int(stmt, 1);
+    axis->length = sqlite3_column_int64(stmt, 2);
+    axis->frequency = sqlite3_column_int(stmt, 3);
+    switch (axis->ax_type)
+    {
+    case axis_plain:
+        axis->first = 0;
+        axis->names = NULL;
+        break;
+    case axis_range:
+        axis->first = sqlite3_column_int64(stmt, 4);
+        axis->names = NULL;
+        break;
+    case axis_names:
+        axis->first = 0;
+        axis->names = (const char *)sqlite3_column_text(stmt, 4);
+        break;
+    default:
+        return error(DE_BAD_AXIS_TYPE);
+    }
+    return DE_SUCCESS;
+}
+
 int sql_load_axis(de_file de, axis_id_t id, axis_t *axis)
 {
     sqlite3_stmt *stmt = _get_statement(de, stmt_load_axis);
@@ -298,27 +326,7 @@ int sql_load_axis(de_file de, axis_id_t id, axis_t *axis)
     switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
-        axis->id = id;
-        axis->ax_type = sqlite3_column_int(stmt, 1);
-        axis->length = sqlite3_column_int64(stmt, 2);
-        axis->frequency = sqlite3_column_int(stmt, 3);
-        switch (axis->ax_type)
-        {
-        case axis_plain:
-            axis->first = 0;
-            axis->names = NULL;
-            break;
-        case axis_range:
-            axis->first = sqlite3_column_int64(stmt, 4);
-            axis->names = NULL;
-            break;
-        case axis_names:
-            axis->first = 0;
-            axis->names = (const char *)sqlite3_column_text(stmt, 4);
-            break;
-        default:
-            return error(DE_BAD_AXIS_TYPE);
-        }
+        TRACE_RUN(_fill_axis(stmt, axis));
         return DE_SUCCESS;
     case SQLITE_DONE:
         return error(DE_AXIS_DNE);
@@ -532,6 +540,117 @@ int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries)
         return rc_error(rc);
     }
 }
+
+/**************************************************************/
+/* ndtseries */
+
+int sql_store_ndtseries_value(de_file de, obj_id_t id, type_t eltype, frequency_t elfreq,
+                              int64_t nbytes, const void *value)
+{
+    sqlite3_stmt *stmt = _get_statement(de, stmt_store_ndtseries);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
+    CHECK_SQLITE(sqlite3_bind_int(stmt, 2, eltype));
+    CHECK_SQLITE(sqlite3_bind_int(stmt, 3, elfreq));
+    if (value != NULL && nbytes > 0)
+    {
+        CHECK_SQLITE(sqlite3_bind_blob(stmt, 4, value, nbytes, SQLITE_TRANSIENT));
+    }
+    else
+    {
+        CHECK_SQLITE(sqlite3_bind_null(stmt, 4));
+    }
+    rc = sqlite3_step(stmt);
+    return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
+}
+
+int sql_store_ndaxes(de_file de, obj_id_t obj_id, int64_t axis_index, axis_id_t axis_id)
+{
+    sqlite3_stmt *stmt = _get_statement(de, stmt_store_ndaxes);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, obj_id));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 2, axis_index));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 3, axis_id));
+    rc = sqlite3_step(stmt);
+    return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
+}
+
+void _fill_ndtseries(sqlite3_stmt *stmt, ndtseries_t *ndtseries)
+{
+    obj_id_t id = sqlite3_column_int64(stmt, 0);
+    if (id != ndtseries->object.id)
+        error(DE_BAD_OBJ);
+    ndtseries->eltype = sqlite3_column_int(stmt, 1);
+    ndtseries->elfreq = sqlite3_column_int(stmt, 2);
+    ndtseries->nbytes = sqlite3_column_bytes(stmt, 3);
+    ndtseries->value = sqlite3_column_blob(stmt, 3);
+}
+
+int _sql_load_ndaxes(de_file de, ndtseries_t *ndtseries)
+{
+    sqlite3_stmt *stmt = _get_statement(de, stmt_load_ndaxes);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, ndtseries->object.id));
+    memset(ndtseries->axis, 0, sizeof ndtseries->axis);
+    for (int n = 0; n < DE_MAX_AXES; ++n)
+    {
+        ndtseries->axis[n].id = -1;
+    }
+    while (1)
+    {
+        switch ((rc = sqlite3_step(stmt)))
+        {
+        case SQLITE_ROW:
+        {
+            int64_t axis_index = sqlite3_column_int64(stmt, 5);
+            if ((axis_index < 0) || (axis_index >= DE_MAX_AXES))
+            {
+                return error(DE_BAD_NUM_AXES);
+            }
+            TRACE_RUN(_fill_axis(stmt, &ndtseries->axis[axis_index]));
+            ndtseries->naxes = axis_index + 1;
+            break;
+        }
+        case SQLITE_DONE:
+            return DE_SUCCESS;
+        default:
+            return rc_error(rc);
+        }
+    }
+}
+
+int sql_load_ndtseries_value(de_file de, obj_id_t id, ndtseries_t *ndtseries)
+{
+    sqlite3_stmt *stmt = _get_statement(de, stmt_load_ndtseries);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
+    switch ((rc = sqlite3_step(stmt)))
+    {
+    case SQLITE_ROW:
+        _fill_ndtseries(stmt, ndtseries);
+        TRACE_RUN(_sql_load_ndaxes(de, ndtseries));
+        return DE_SUCCESS;
+    case SQLITE_DONE:
+        return error(DE_BAD_OBJ);
+    default:
+        return rc_error(rc);
+    }
+}
+
+/**************************************************************/
+/* count */
 
 int sql_count_objects(de_file de, obj_id_t pid, int64_t *count)
 {

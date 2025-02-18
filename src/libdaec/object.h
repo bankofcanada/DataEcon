@@ -21,13 +21,15 @@ typedef enum
     class_tseries = class_vector,
     class_matrix, /* 2d array*/
     class_mvtseries = class_matrix,
+    class_tensor, /* Nd array */
+    class_ndtseries = class_tensor,
     class_any = -1
 } class_t;
 
 typedef enum
 {
     type_none = 0,    /* for object that don't have a type, e.g. class_catalog */
-    type_integer = 1, /* stored in scalars */
+    type_integer = 1, /* stored in table `scalars` */
     type_signed = type_integer,
     type_unsigned,
     type_date,
@@ -35,13 +37,16 @@ typedef enum
     type_complex,
     type_string,
     type_other_scalar,
-    type_vector = 10, /* stored in arrays1d */
+    type_vector = 10, /* stored in table `tseries` */
     type_range,
     type_tseries,
     type_other_1d,
-    type_matrix = 20, /* stored in arrays2d */
+    type_matrix = 20, /* stored in table `mvtseries` */
     type_mvtseries,
     type_other_2d,
+    type_tensor = 30, /* stored in table `ndtseries` */
+    type_ndtseries,
+    type_other_nd,
     type_any = -1
 } type_t;
 

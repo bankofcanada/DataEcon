@@ -5,12 +5,14 @@
 #include <stdint.h>
 
 /* ***************************** config ************************************** */
-#define DE_VERSION "0.3.1"
-#define DE_VERNUM 0x0310
+#define DE_VERSION "0.3.2"
+#define DE_VERNUM 0x0320
 #define DE_VER_MAJOR 0
 #define DE_VER_MINOR 3
-#define DE_VER_REVISION 1
+#define DE_VER_REVISION 2
 #define DE_VER_SUBREVISION 0
+
+#define DE_MAX_AXES 5   /* maximum number of axes (dimensions) of Nd-arrays */
 
 #ifdef __cplusplus
 extern "C"
@@ -38,15 +40,16 @@ extern "C"
         DE_SUCCESS = 0,       /* no error */
         DE_ERR_ALLOC = -1000, /* memory allocation error */
         DE_BAD_AXIS_TYPE,     /* invalid axis type code */
+        DE_BAD_NUM_AXES,      /* invalid number of axes */
         DE_BAD_CLASS,         /* class of object does not match */
         DE_BAD_TYPE,          /* type of object is not valid for its class */
         DE_BAD_ELTYPE,        /* element type is not scalar */
         DE_BAD_ELTYPE_NONE,   /* element type is type_none(0) for an object type other than range */
-        DE_BAD_ELTYPE_DATE,   /* element type is date must have element frequency other than freq_none (0) */
+        DE_BAD_ELTYPE_DATE,   /* element type date must have element frequency other than freq_none (0) */
         DE_BAD_NAME,          /* invalid object name */
         DE_BAD_FREQ,          /* bad frequency */
         DE_SHORT_BUF,         /* provided buffer is too short */
-        DE_OBJ_DNE,           /* object does not exist */
+        DE_OBJ_DNE ,          /* object does not exist */
         DE_AXIS_DNE,          /* axis does not exist */
         DE_ARG,               /* invalid combination of arguments */
         DE_NO_OBJ,            /* no more objects in search list */
@@ -89,13 +92,15 @@ extern "C"
         class_tseries = class_vector,
         class_matrix, /* 2d array*/
         class_mvtseries = class_matrix,
+        class_tensor, /* Nd array */
+        class_ndtseries = class_tensor,
         class_any = -1
     } class_t;
 
     typedef enum
     {
         type_none = 0,    /* for object that don't have a type, e.g. class_catalog */
-        type_integer = 1, /* stored in scalars */
+        type_integer = 1, /* stored in table `scalars` */
         type_signed = type_integer,
         type_unsigned,
         type_date,
@@ -103,13 +108,16 @@ extern "C"
         type_complex,
         type_string,
         type_other_scalar,
-        type_vector = 10, /* stored in arrays1d */
+        type_vector = 10, /* stored in table `tseries` */
         type_range,
         type_tseries,
         type_other_1d,
-        type_matrix = 20, /* stored in arrays2d */
+        type_matrix = 20, /* stored in table `mvtseries` */
         type_mvtseries,
         type_other_2d,
+        type_tensor = 30, /* stored in table `ndtseries` */
+        type_ndtseries,
+        type_other_nd,
         type_any = -1
     } type_t;
 
@@ -299,7 +307,7 @@ extern "C"
     typedef tseries_t vector_t;
 
     /* create a new 1d-array object in a given parent catalog */
-    int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
+    int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
                          type_t eltype, frequency_t elfreq,
                          axis_id_t axis_id, int64_t nbytes, const void *value,
                          obj_id_t *id);
@@ -323,8 +331,8 @@ extern "C"
     } mvtseries_t;
     typedef mvtseries_t matrix_t;
 
-    /* create a new 1d-array object in a given parent catalog */
-    int de_store_mvtseries(de_file de, obj_id_t pid, const char *name, type_t type,
+    /* create a new 2d-array object in a given parent catalog */
+    int de_store_mvtseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
                            type_t eltype, frequency_t elfreq,
                            axis_id_t axis1_id, axis_id_t axis2_id,
                            int64_t nbytes, const void *value,
@@ -332,6 +340,32 @@ extern "C"
 
     /* load a 2d-array object by name from a given parent catalog */
     int de_load_mvtseries(de_file de, obj_id_t id, mvtseries_t *mvtseries);
+
+    /* ***************************** ndtseries *********************************** */
+
+    typedef struct
+    {
+        object_t object;
+        type_t eltype;
+        frequency_t elfreq;
+        int64_t naxes;
+        axis_t axis[DE_MAX_AXES];
+        int64_t nbytes;
+        const void *value;
+        /* when ndtseries instance is created by a call to de_load_ndtseries the memory for `value`
+        is managed by the library and is valid until the next library call */
+    } ndtseries_t;
+    typedef ndtseries_t tensor_t;
+
+    /* create a new Nd-array object in a given parent catalog */
+    int de_store_ndtseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
+                        type_t eltype, frequency_t elfreq,
+                        int64_t naxes, const axis_id_t *axis_ids,
+                        int64_t nbytes, const void *value,
+                        obj_id_t *id);
+
+    /* load a Nd-array object by name from a given parent catalog */
+    int de_load_ndtseries(de_file de, obj_id_t id, ndtseries_t *ndtseries);
 
     /* ***************************** misc **************************************** */
 

@@ -198,15 +198,16 @@ void _split_name(const char *name, obj_id_t *pid, const char **basename)
         memcpy(parent_fullpath, name, len);
         parent_fullpath[len] = 0;
         int rc = de_find_fullpath(db, parent_fullpath, pid);
-        free(parent_fullpath);
         if (rc != DE_SUCCESS)
         {
             print_error("Failed to find the id of parent catalog %s", parent_fullpath);
             print_de_error();
             *basename = NULL;
             *pid = -1;
+            free(parent_fullpath);
             return;
         }
+        free(parent_fullpath);
     }
 }
 

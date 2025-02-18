@@ -56,7 +56,7 @@ int main(void)
         xvals[i % VECLEN] = i + 1;
         snprintf(msg, 1023, "x%d", i);
 
-        rc = de_store_tseries(de, series, msg, type_vector, type_float, axis, sizeof(xvals), &xvals, NULL);
+        rc = de_store_tseries(de, series, msg, type_vector, type_float, freq_none, axis, sizeof(xvals), &xvals, NULL);
         CHECK(rc);
     }
 
