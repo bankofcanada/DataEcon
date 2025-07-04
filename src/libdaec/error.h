@@ -24,15 +24,16 @@ enum
     DE_SUCCESS = 0,       /* no error */
     DE_ERR_ALLOC = -1000, /* memory allocation error */
     DE_BAD_AXIS_TYPE,     /* invalid axis type code */
+    DE_BAD_NUM_AXES,      /* invalid number of axes */
     DE_BAD_CLASS,         /* class of object does not match */
     DE_BAD_TYPE,          /* type of object is not valid for its class */
     DE_BAD_ELTYPE,        /* element type is not scalar */
     DE_BAD_ELTYPE_NONE,   /* element type is type_none(0) for an object type other than range */
-    DE_BAD_ELTYPE_DATE,   /* element type is date must have element frequency other than freq_none (0) */
+    DE_BAD_ELTYPE_DATE,   /* element type date must have element frequency other than freq_none (0) */
     DE_BAD_NAME,          /* invalid object name */
     DE_BAD_FREQ,          /* bad frequency */
     DE_SHORT_BUF,         /* provided buffer is too short */
-    DE_OBJ_DNE ,           /* object does not exist */
+    DE_OBJ_DNE ,          /* object does not exist */
     DE_AXIS_DNE,          /* axis does not exist */
     DE_ARG,               /* invalid combination of arguments */
     DE_NO_OBJ,            /* no more objects in search list */

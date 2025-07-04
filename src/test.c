@@ -75,6 +75,8 @@ void check_axis(axis_t axis, axis_id_t id, axis_type_t type, int64_t length, fre
         fail(file, line, "Axis id doesn't match");
     if (axis.ax_type != type)
         fail(file, line, "Axis type doesn't match");
+    if (axis.length != length)
+        fail(file, line, "Axis length doesn't match");
     if (axis.frequency != frequency)
         fail(file, line, "Axis frequency doesn't match");
     if (axis.first != first)
@@ -89,8 +91,8 @@ void check_axis(axis_t axis, axis_id_t id, axis_type_t type, int64_t length, fre
     ++checks;
 }
 
-#define CHECK_TSERIES(tseries, id, type, eltype, elfreq, axis, value) check_tseries(tseries, id, type, eltype, elfreq, axis, value, __FILE__, __LINE__)
-void check_tseries(tseries_t tseries, obj_id_t id, type_t type, type_t eltype, frequency_t elfreq, axis_id_t axis, void *value, const char *file, int line)
+#define CHECK_TSERIES(tseries, id, type, eltype, elfreq, elsize, axis, value) check_tseries(tseries, id, type, eltype, elfreq, elsize, axis, value, __FILE__, __LINE__)
+void check_tseries(tseries_t tseries, obj_id_t id, type_t type, type_t eltype, frequency_t elfreq, int64_t elsize, axis_id_t axis, void *value, const char *file, int line)
 {
     if (tseries.object.id != id)
         fail(file, line, "tseries id doesn't match.");
@@ -104,6 +106,8 @@ void check_tseries(tseries_t tseries, obj_id_t id, type_t type, type_t eltype, f
         fail(file, line, "tseries elfreq doesn't match.");
     if (tseries.axis.id != axis)
         fail(file, line, "tseries axis doesn't match.");
+    if ((elsize != -1) && (tseries.axis.length * elsize != tseries.nbytes))
+        fail(file, line, "tseries nbytes doesn't match.");
     if (tseries.value == NULL && value != NULL)
         fail(file, line, "tseries value is unexpectedly NULL.");
     if (tseries.value != NULL && value == NULL)
@@ -117,10 +121,10 @@ void check_tseries(tseries_t tseries, obj_id_t id, type_t type, type_t eltype, f
     ++checks;
 }
 
-#define CHECK_MVTSERIES(mvtseries, id, type, eltype, elfreq, axis1, axis2, value) \
-    check_mvtseries(mvtseries, id, type, eltype, elfreq, axis1, axis2, value, __FILE__, __LINE__)
+#define CHECK_MVTSERIES(mvtseries, id, type, eltype, elfreq, elsize, axis1, axis2, value) \
+    check_mvtseries(mvtseries, id, type, eltype, elfreq, elsize, axis1, axis2, value, __FILE__, __LINE__)
 
-void check_mvtseries(mvtseries_t mvtseries, obj_id_t id, type_t type, type_t eltype, frequency_t elfreq,
+void check_mvtseries(mvtseries_t mvtseries, obj_id_t id, type_t type, type_t eltype, frequency_t elfreq, int64_t elsize,
                      axis_id_t axis1, axis_id_t axis2, void *value, const char *file, int line)
 {
     if (mvtseries.object.id != id)
@@ -137,6 +141,9 @@ void check_mvtseries(mvtseries_t mvtseries, obj_id_t id, type_t type, type_t elt
         fail(file, line, "mvtseries axis1 doesn't match.");
     if (mvtseries.axis2.id != axis2)
         fail(file, line, "mvtseries axis2 doesn't match.");
+    int64_t nbytes = mvtseries.axis1.length * mvtseries.axis2.length * elsize;
+    if ((elsize != -1) && (mvtseries.nbytes != nbytes))
+        fail(file, line, "mvtseries nbytes doesn't match.");
     if (mvtseries.value == NULL && value != NULL)
         fail(file, line, "mvtseries value is unexpectedly NULL.");
     if (mvtseries.value != NULL && value == NULL)
@@ -147,6 +154,57 @@ void check_mvtseries(mvtseries_t mvtseries, obj_id_t id, type_t type, type_t elt
         fail(file, line, "mvtseries nbytes is not positive while value is not NULL.");
     if (mvtseries.value != NULL && value != NULL && memcmp(mvtseries.value, value, mvtseries.nbytes) != 0)
         fail(file, line, "mvtseries value doesn't match.");
+    ++checks;
+}
+
+#define CHECK_NDTSERIES(ndtseries, id, type, eltype, elfreq, elsize, naxes, axes, value) \
+    check_ndtseries(ndtseries, id, type, eltype, elfreq, elsize, naxes, axes, value, __FILE__, __LINE__)
+
+void check_ndtseries(ndtseries_t ndtseries, obj_id_t id, type_t type, type_t eltype, frequency_t elfreq, int64_t elsize,
+                     int64_t naxes, axis_id_t *axis_ids, void *value, const char *file, int line)
+{
+    if (ndtseries.object.id != id)
+        fail(file, line, "ndtseries id doesn't match.");
+    if (ndtseries.object.obj_class != class_ndtseries)
+        fail(file, line, "ndtseries class doesn't match.");
+    if (ndtseries.object.obj_type != type)
+        fail(file, line, "ndtseries type doesn't match.");
+    if (ndtseries.eltype != eltype)
+        fail(file, line, "ndtseries eltype doesn't match.");
+    if (ndtseries.elfreq != elfreq)
+        fail(file, line, "ndtseries elfreq doesn't match.");
+    if (ndtseries.naxes != naxes)
+        fail(file, line, "ndtseries number of axes doesn't match.");
+    int64_t nbytes = elsize;
+    for (int n = 0; n < naxes; ++n)
+    {
+        if (ndtseries.axis[n].id != axis_ids[n])
+            fail(file, line, "ndtseries axis id in range doesn't match.");
+        nbytes *= ndtseries.axis[n].length;
+    }
+    for (int n = naxes; n < DE_MAX_AXES; ++n)
+        if (ndtseries.axis[n].id != -1)
+            fail(file, line, "ndtseries axis id out of range isn't set to -1.");
+    if ((elsize != -1) && (ndtseries.nbytes != nbytes))
+    {
+        // for(int n = 0; n < naxes; ++n) {
+        //     printf("Axis %d length = %ld\n", n, ndtseries.axis[n].length);
+        // }
+        // printf("elsize = %ld\n", elsize);
+        // printf("nbytes = %ld\n", nbytes);
+        // printf("nbytes = %ld\n", ndtseries.nbytes);
+        fail(file, line, "ndtseries nbytes doesn't match.");
+    }
+    if (ndtseries.value == NULL && value != NULL)
+        fail(file, line, "ndtseries value is unexpectedly NULL.");
+    if (ndtseries.value != NULL && value == NULL)
+        fail(file, line, "ndtseries value is unexpectedly not NULL.");
+    if (ndtseries.value == NULL && ndtseries.nbytes != 0)
+        fail(file, line, "ndtseries nbytes is not 0 while value is NULL.");
+    if (ndtseries.value != NULL && ndtseries.nbytes <= 0)
+        fail(file, line, "ndtseries nbytes is not positive while value is not NULL.");
+    if (ndtseries.value != NULL && value != NULL && memcmp(ndtseries.value, value, ndtseries.nbytes) != 0)
+        fail(file, line, "ndtseries value doesn't match.");
     ++checks;
 }
 
@@ -417,8 +475,12 @@ int main(void)
         FAIL_IF(strcmp(name, "greeting,summary") != 0, "");
         FAIL_IF(strcmp(value, "hello,what do you think you're doing?") != 0, "");
         /* object exists, but has no attributes - return num = 0 */
+        CHECK_SUCCESS(de_store_scalar(de, 0, "attr_test_1", type_signed, freq_none, sizeof val, &val, &_id));
+        CHECK_SUCCESS(de_get_all_attributes(de, _id, ",", &num, &name, &value));
+        FAIL_IF(num != 0 || name != NULL || value != NULL, "de_get_all_attributes for object with no attributes");
+        /* root catalog has one attribute */
         CHECK_SUCCESS(de_get_all_attributes(de, 0, ",", &num, &name, &value));
-        FAIL_IF(num != 0 || name != NULL || value != NULL, "");
+        FAIL_IF(num != 1 || (strcmp(name, "DE_VERSION") != 0) || (strcmp(value, de_version()) != 0), "Get all attributes of root catalog");
         /* object does not exist - DE_OBJ_DNE*/
         CHECK(de_get_all_attributes(de, -1, ",", &num, &name, &value), DE_OBJ_DNE);
     }
@@ -431,6 +493,8 @@ int main(void)
 
         CHECK(de_axis_plain(NULL, 5, &_id), DE_NULL);
         CHECK(de_axis_plain(de, 5, NULL), DE_NULL);
+
+        CHECK(de_load_axis(de, -1, &axis), DE_AXIS_DNE);
 
         CHECK_SUCCESS(de_axis_plain(de, 5, &_id));
         CHECK_SUCCESS(de_load_axis(de, _id, &axis));
@@ -534,26 +598,26 @@ int main(void)
         CHECK(de_store_tseries(de, id_tseries, "rng_plain", type_mvtseries, type_float, freq_none, ax, 0, NULL, &_id), DE_BAD_TYPE);
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "rng_plain", type_range, type_none, freq_none, ax, 0, NULL, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
-        CHECK_TSERIES(ts, _id, type_range, type_none, freq_none, ax, NULL);
+        CHECK_TSERIES(ts, _id, type_range, type_none, freq_none, 0, ax, NULL);
 
         /* dates range */
         CHECK_SUCCESS(de_axis_range(de, 6, freq_halfyearly, 4041, &ax));
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "rng_dates", type_range, type_none, freq_none, ax, 0, NULL, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
-        CHECK_TSERIES(ts, _id, type_range, type_none, freq_none, ax, NULL);
+        CHECK_TSERIES(ts, _id, type_range, type_none, freq_none, 0, ax, NULL);
 
         date_t cvals[] = {11, 12, 13, 14, 15, 16, 17, 18};
         CHECK_SUCCESS(de_axis_plain(de, sizeof cvals / sizeof cvals[0], &ax));
         CHECK(de_store_tseries(de, id_tseries, "ts_date", type_vector, type_date, freq_none, ax, sizeof cvals, cvals, &_id), DE_BAD_ELTYPE_DATE);
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "ts_date", type_vector, type_date, freq_unit, ax, sizeof cvals, cvals, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
-        CHECK_TSERIES(ts, _id, type_vector, type_date, freq_unit, ax, cvals);
+        CHECK_TSERIES(ts, _id, type_vector, type_date, freq_unit, sizeof cvals[0], ax, cvals);
 
         double dvals[5] = {0.1, 0.2, 0.3, 0.4, 0.5};
         CHECK_SUCCESS(de_axis_plain(de, sizeof dvals / sizeof dvals[0], &ax));
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "ts_double", type_tseries, type_float, freq_none, ax, sizeof dvals, dvals, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
-        CHECK_TSERIES(ts, _id, type_tseries, type_float, freq_none, ax, dvals);
+        CHECK_TSERIES(ts, _id, type_tseries, type_float, freq_none, sizeof dvals[0], ax, dvals);
 
         CHECK(de_store_tseries(de, id_tseries, "ts_double", type_tseries, type_float, freq_none, ax, sizeof dvals, dvals, &_id), DE_EXISTS);
         CHECK(de_store_tseries(NULL, id_tseries, "ts_double", type_tseries, type_float, freq_none, ax, sizeof dvals, dvals, &_id), DE_NULL);
@@ -567,7 +631,7 @@ int main(void)
         FAIL_IF(ax != ts.axis.id, "Duplicate axis.");
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "ts_float", type_tseries, type_float, freq_none, ax, sizeof fvals, fvals, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
-        CHECK_TSERIES(ts, _id, type_tseries, type_float, freq_none, ax, fvals);
+        CHECK_TSERIES(ts, _id, type_tseries, type_float, freq_none, sizeof fvals[0], ax, fvals);
 
         const char *svals[5] = {"one", "two", "three", "four", "five"};
         const char *svals1[8] = {svals[0], svals[0], svals[0], svals[0], svals[0], svals[0], svals[0], svals[0]};
@@ -588,7 +652,7 @@ int main(void)
         CHECK_SUCCESS(de_store_tseries(de, id_tseries, "ts_string", type_tseries, type_string, freq_none, ax, bufsize, buffer, &_id));
         CHECK_SUCCESS(de_load_tseries(de, _id, &ts));
         FAIL_IF(ts.nbytes != bufsize, "nbytes doesn't match.");
-        CHECK_TSERIES(ts, _id, type_tseries, type_string, freq_none, ax, buffer);
+        CHECK_TSERIES(ts, _id, type_tseries, type_string, freq_none, -1, ax, buffer);
 
         CHECK(de_unpack_strings(NULL, ts.nbytes, svals1, 5), DE_NULL);
         CHECK(de_unpack_strings(buffer, ts.nbytes, NULL, 5), DE_NULL);
@@ -618,7 +682,6 @@ int main(void)
         obj_id_t _id;
         mvtseries_t data;
 
-        /* plain range */
         CHECK(de_store_mvtseries(de, cata, "fail", type_integer, type_integer, freq_none, ax1, ax2, 0, NULL, &_id), DE_BAD_TYPE);
         CHECK(de_store_mvtseries(de, cata, "fail", type_tseries, type_integer, freq_none, ax1, ax2, 0, NULL, &_id), DE_BAD_TYPE);
         CHECK(de_store_mvtseries(de, cata, "fail", type_mvtseries, type_none, freq_none, ax1, ax2, 0, NULL, &_id), DE_BAD_ELTYPE_NONE);
@@ -636,7 +699,7 @@ int main(void)
         CHECK_SUCCESS(de_store_mvtseries(de, cata, "empty", type_matrix, type_integer, freq_none, ax1, ax1, 0, NULL, &_id));
 
         CHECK_SUCCESS(de_load_mvtseries(de, _id, &data));
-        CHECK_MVTSERIES(data, _id, type_matrix, type_integer, freq_none, ax1, ax1, NULL);
+        CHECK_MVTSERIES(data, _id, type_matrix, type_integer, freq_none, 7, ax1, ax1, NULL);
 
         double values[3][2] = {{1, 2}, {3, 4}, {5, 6}};
         CHECK_SUCCESS(de_axis_range(de, 2, freq_monthly, 550, &ax1));
@@ -649,7 +712,51 @@ int main(void)
 
         CHECK_SUCCESS(de_store_mvtseries(de, cata, "two_by_three", type_mvtseries, type_float, freq_none, ax1, ax2, sizeof values, values, &_id));
         CHECK_SUCCESS(de_load_mvtseries(de, _id, &data));
-        CHECK_MVTSERIES(data, _id, type_mvtseries, type_float, freq_none, ax1, ax2, values);
+        CHECK_MVTSERIES(data, _id, type_mvtseries, type_float, freq_none, sizeof values[0][0], ax1, ax2, values);
+    }
+
+    /* test ndtseries */
+    {
+
+        obj_id_t cata;
+        CHECK_SUCCESS(de_new_catalog(de, 0, "nd", &cata));
+
+        axis_id_t ax[10];
+        obj_id_t _id;
+        ndtseries_t data;
+
+        CHECK(de_store_ndtseries(de, cata, "fail", type_integer, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_tseries, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_mvtseries, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_TYPE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_none, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE_NONE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_tseries, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_ndtseries, type_date, freq_none, 3, ax, 0, NULL, &_id), DE_BAD_ELTYPE_DATE);
+
+        CHECK(de_store_ndtseries(NULL, cata, "fail", type_tensor, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_NULL);
+        CHECK(de_store_ndtseries(de, cata, NULL, type_tensor, type_integer, freq_none, 3, ax, 0, NULL, &_id), DE_NULL);
+        CHECK(de_store_ndtseries(de, cata, "fail", type_tensor, type_integer, freq_none, 0, NULL, 0, NULL, &_id), DE_NULL);
+
+        CHECK(de_store_ndtseries(de, cata, "fail", type_tensor, type_integer, freq_none, 10, ax, 0, NULL, &_id), DE_BAD_NUM_AXES);
+
+        CHECK(de_load_ndtseries(NULL, _id, &data), DE_NULL);
+        CHECK(de_load_ndtseries(de, _id, NULL), DE_NULL);
+        CHECK(de_load_ndtseries(de, cata, &data), DE_BAD_CLASS);
+
+        double values[3][2][1] = {{{1}, {2}}, {{3}, {4}}, {{5}, {6}}};
+        CHECK_SUCCESS(de_axis_plain(de, 1, &ax[0]));
+        CHECK_SUCCESS(de_axis_plain(de, 2, &ax[1]));
+        CHECK_SUCCESS(de_axis_plain(de, 3, &ax[2]));
+        CHECK_SUCCESS(de_store_ndtseries(de, cata, "onetwothree", type_tensor,
+                                         type_float, freq_none, 3, ax,
+                                         sizeof values, values, &_id));
+        CHECK_SUCCESS(de_load_ndtseries(de, _id, &data));
+        CHECK_NDTSERIES(data, _id, type_tensor, type_float, freq_none, sizeof values[0][0][0], 3, ax, values);
+        ax[3] = ax[0];
+        CHECK_SUCCESS(de_store_ndtseries(de, cata, "onetwothreeone", type_tensor,
+                                         type_float, freq_none, 4, ax,
+                                         sizeof values, values, &_id));
+        CHECK_SUCCESS(de_load_ndtseries(de, _id, &data));
+        CHECK_NDTSERIES(data, _id, type_tensor, type_float, freq_none, sizeof values[0][0][0], 4, ax, values);
     }
 
     /* test search and list */

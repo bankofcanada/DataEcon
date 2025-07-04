@@ -22,8 +22,8 @@ typedef struct
 } mvtseries_t;
 typedef mvtseries_t matrix_t;
 
-/* create a new 1d-array object in a given parent catalog */
-int de_store_mvtseries(de_file de, obj_id_t pid, const char *name, type_t type,
+/* create a new 2d-array object in a given parent catalog */
+int de_store_mvtseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
                        type_t eltype, frequency_t elfreq,
                        axis_id_t axis1_id, axis_id_t axis2_id,
                        int64_t nbytes, const void *value,
