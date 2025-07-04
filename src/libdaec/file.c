@@ -92,7 +92,7 @@ int _init_file(de_file de)
     RUN_SQL(de,
             "CREATE TABLE `ndaxes` ("
             "   `obj_id` INTEGER NOT NULL,"
-            "   `axis_index` INTEGER NOT NULL," 
+            "   `axis_index` INTEGER NOT NULL,"
             "   `axis_id` INTEGER NOT NULL,"
             "   PRIMARY KEY (`obj_id`, `axis_index`) ON CONFLICT REPLACE,"
             "   FOREIGN KEY (`obj_id`) REFERENCES `objects` (`id`) ON DELETE CASCADE,"
@@ -188,6 +188,11 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
 
 sqlite3_stmt *_get_statement(de_file de, stmt_name_t stmt_name)
 {
+    if ((stmt_name < 0) || (stmt_size <= stmt_name))
+    {
+        trace_error();
+        return NULL;
+    }
     sqlite3_stmt *stmt = de->stmt[stmt_name];
     if (stmt != NULL)
         return stmt;
@@ -319,10 +324,11 @@ int de_truncate(de_file de)
     if (de == NULL)
         return error(DE_NULL);
     TRACE_RUN(de_commit(de));
-    TRACE_RUN(de_begin_transaction(de));
-    RUN_SQL(de,
-            "DELETE FROM `objects` WHERE `id` > 0;"
-            "DELETE FROM `axes`;");
-    TRACE_RUN(de_commit(de));
+    // https://www.sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfigresetdatabase
+    sqlite3_exec(de->db, "SELECT COUNT(*) FROM `objects` WHERE `pid` = 0;", NULL, NULL, NULL);
+    sqlite3_db_config(de->db, SQLITE_DBCONFIG_RESET_DATABASE, 1, 0);
+    sqlite3_exec(de->db, "VACUUM", 0, 0, 0);
+    sqlite3_db_config(de->db, SQLITE_DBCONFIG_RESET_DATABASE, 0, 0);
+    TRACE_RUN(_init_file(de));
     return DE_SUCCESS;
 }

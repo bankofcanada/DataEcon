@@ -877,6 +877,15 @@ int main(void)
         CHECK(de_next_object(search, &obj), DE_NO_OBJ);
         CHECK_SUCCESS(de_finalize_search(search));
 
+        const char hello[] = "hello";
+        CHECK_SUCCESS(de_store_scalar(de, 0, "test", type_string, freq_none, sizeof hello, hello, NULL));
+        CHECK_SUCCESS(de_list_catalog(de, 0, &search));
+        CHECK_SUCCESS(de_next_object(search, &obj));
+        FAIL_IF(obj.id != 1, "Truncation didn't reset object ID counter");
+        CHECK(de_next_object(search, &obj), DE_NO_OBJ);
+        CHECK_SUCCESS(de_finalize_search(search));
+
+        CHECK_SUCCESS(de_truncate(de));
         CHECK_SUCCESS(de_close(de));
         CHECK_SUCCESS(de_open(fname, &de));
         CHECK_SUCCESS(de_list_catalog(de, 0, &search));
