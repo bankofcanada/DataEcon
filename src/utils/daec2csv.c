@@ -56,7 +56,7 @@ void write_line(struct outFile *F, const char *line)
         fputs(line, F->file.F);
 }
 
-void print_header()
+void print_header(void)
 {
     write_line(&M, "name,type,frequency,eltype\n");
     write_line(&D, "date,name,value\n");
@@ -211,7 +211,7 @@ int export_catalog(obj_id_t pid)
     return rc;
 }
 
-void close_all()
+void close_all(void)
 {
     if (M.compressed && M.file.gz != NULL)
         gzclose(M.file.gz);

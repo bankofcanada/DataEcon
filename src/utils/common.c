@@ -194,7 +194,7 @@ void print_error(const char *message, ...)
     va_end(args);
 }
 
-void print_de_error()
+void print_de_error(void)
 {
     static char message[1024];
     de_error(message, sizeof message - 1);
@@ -276,7 +276,7 @@ int snprintf_float(char *restrict buffer, size_t bufsz, int64_t nbytes, const vo
 
 static date_fmt_t date_fmt;
 
-date_fmt_t get_date_fmt()
+date_fmt_t get_date_fmt(void)
 {
     return date_fmt;
 }

@@ -297,15 +297,11 @@ int de_begin_transaction(de_file de)
     return DE_SUCCESS;
 }
 
-int de_close(de_file de)
+int _fin_stmts(de_file de)
 {
-    if (de == NULL)
-        return DE_SUCCESS;
-    int rc;
-    TRACE_RUN(de_commit(de));
     for (stmt_name_t i = 0; i < stmt_last; ++i)
     {
-        rc = sqlite3_finalize(de->stmt[i]);
+        int rc = sqlite3_finalize(de->stmt[i]);
         if (SQLITE_OK == rc)
         {
             de->stmt[i] = NULL;
@@ -313,10 +309,19 @@ int de_close(de_file de)
         }
         return rc_error(rc);
     }
+    return DE_SUCCESS;
+}
+
+int de_close(de_file de)
+{
+    if (de == NULL)
+        return DE_SUCCESS;
+    TRACE_RUN(de_commit(de));
+    TRACE_RUN(_fin_stmts(de));
     if (SQLITE_OK != sqlite3_close(de->db))
         return db_error(de);
     free(de);
-    return rc;
+    return DE_SUCCESS;
 }
 
 int de_truncate(de_file de)
@@ -324,8 +329,16 @@ int de_truncate(de_file de)
     if (de == NULL)
         return error(DE_NULL);
     TRACE_RUN(de_commit(de));
+    // sqlite3_exec(de->db, "SELECT COUNT(*) FROM `objects` WHERE `pid` = 0;", NULL, NULL, NULL);
+    {
+        int64_t nobj;
+        TRACE_RUN(sql_count_objects(de, 0, &nobj));
+        // N.B. root catalog is its own parent, so empty root gives count 1, not 0
+        if (nobj == 1) 
+            return DE_SUCCESS;
+    }
+    TRACE_RUN(_fin_stmts(de))
     // https://www.sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfigresetdatabase
-    sqlite3_exec(de->db, "SELECT COUNT(*) FROM `objects` WHERE `pid` = 0;", NULL, NULL, NULL);
     sqlite3_db_config(de->db, SQLITE_DBCONFIG_RESET_DATABASE, 1, 0);
     sqlite3_exec(de->db, "VACUUM", 0, 0, 0);
     sqlite3_db_config(de->db, SQLITE_DBCONFIG_RESET_DATABASE, 0, 0);

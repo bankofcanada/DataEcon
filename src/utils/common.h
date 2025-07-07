@@ -20,7 +20,7 @@ extern "C"
     const char *_eltype_text(type_t eltype, frequency_t elfreq);
 
     void print_error(const char *message, ...);
-    void print_de_error();
+    void print_de_error(void);
 
     int snprintf_value(char *buffer, size_t bufsz, type_t val_type, frequency_t val_freq, int64_t nbytes, const void *value);
     int snprintf_integer(char *buffer, size_t bufsz, int64_t nbytes, const void *value);
@@ -36,7 +36,7 @@ extern "C"
         date_fmt_yp
     } date_fmt_t;
 
-    date_fmt_t get_date_fmt();
+    date_fmt_t get_date_fmt(void);
     date_fmt_t set_date_fmt(date_fmt_t date_fmt);
 
     int escape_string(char *buffer, size_t bufsz, const char *string);

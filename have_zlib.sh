@@ -12,7 +12,7 @@ CC=${1:-gcc}
 
 {
     
-$CC -x c -o a.exe -lz - << EOF
+$CC -x c -o a.exe - -lz << EOF
 #include <stdio.h>
 #include <stdlib.h>
 #include <zlib.h>
