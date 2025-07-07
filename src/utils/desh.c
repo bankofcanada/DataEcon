@@ -21,8 +21,9 @@ void add_history(char *command) {}
 #include "common.h"
 
 char *strip(char *line);
-char *repl_read_command();
+char *repl_read_command(void);
 void repl_execute(char *command);
+void new_catalog(void);
 
 void print_version(FILE *F)
 {
@@ -143,7 +144,7 @@ char *strip(char *line)
     return s;
 }
 
-char *repl_read_command()
+char *repl_read_command(void)
 {
 #ifdef HAVE_READLINE
     printf("\n");
@@ -668,3 +669,4 @@ void repl_execute(char *command_line)
     }
     _junk(maybe_junk);
 }
+
