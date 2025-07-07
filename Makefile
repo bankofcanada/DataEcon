@@ -177,7 +177,7 @@ ifeq ($(HAVE_READLINE),yes)
 
 # compile sqlite3
 $(SQLITE3_SRC_O) : $(SQLITE3_SRC_C) | $(CACHEDIR)
-	$(COMPILE.c) -std=gnu99 -DHAVE_READLINE $(OUTPUT_OPTION) $<
+	$(COMPILE.c) -std=gnu99 -Wno-all -Wno-pedantic -DHAVE_READLINE $(OUTPUT_OPTION) $<
 
 # link sqlite3 shell executable
 $(SQLITE3): $(SQLITE3_SRC_O) $(CACHEDIR)/sqlite3.o | bin
@@ -187,7 +187,7 @@ else
 
 # compile sqlite3
 $(SQLITE3_SRC_O) : $(SQLITE3_SRC_C) | $(CACHEDIR)
-	$(COMPILE.c) -std=gnu99 $(OUTPUT_OPTION) $<
+	$(COMPILE.c) -std=gnu99 -Wno-all -Wno-pedantic $(OUTPUT_OPTION) $<
 
 # link sqlite3 shell executable
 $(SQLITE3): $(SQLITE3_SRC_O) $(CACHEDIR)/sqlite3.o | bin
