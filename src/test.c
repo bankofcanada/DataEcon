@@ -757,6 +757,15 @@ int main(void)
                                          sizeof values, values, &_id));
         CHECK_SUCCESS(de_load_ndtseries(de, _id, &data));
         CHECK_NDTSERIES(data, _id, type_tensor, type_float, freq_none, sizeof values[0][0][0], 4, ax, values);
+
+        ax[4] = ax[0];
+        CHECK_SUCCESS(de_store_ndtseries(de, cata, "onetwothreeoneone", type_tensor,
+                                         type_float, freq_none, 5, ax,
+                                         sizeof values, values, &_id));
+        ax[5] = ax[0];
+        CHECK(de_store_ndtseries(de, cata, "onetwothreeoneoneone", type_tensor,
+                                         type_float, freq_none, 6, ax,
+                                         sizeof values, values, &_id), DE_BAD_NUM_AXES);
     }
 
     /* test search and list */

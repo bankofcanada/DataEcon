@@ -25,7 +25,7 @@ int de_store_ndtseries(de_file de, obj_id_t pid, const char *name, type_t obj_ty
     if (!check_ndtseries_type(obj_type))
         return error(DE_BAD_TYPE);
     TRACE_RUN(validate_eltype(obj_type, eltype, elfreq));
-    if ((naxes < 0) || (naxes >= DE_MAX_AXES))
+    if ((naxes < 0) || (naxes > DE_MAX_AXES))
         return error(DE_BAD_NUM_AXES);
 
     obj_id_t _id;
