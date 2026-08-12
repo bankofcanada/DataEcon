@@ -5,18 +5,20 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "config.h"
+
 /* ========================================================================= */
 /* API */
 
 /* Return the result code of the most recent error. If msg != NULL, fill msg with
 the corresponding error message and clear the error. */
-int de_error(char *restrict msg, size_t len);
+DE_API int de_error(char *restrict msg, size_t len);
 
 /* same, but message contains information about the source of the error. */
-int de_error_source(char *restrict msg, size_t len);
+DE_API int de_error_source(char *restrict msg, size_t len);
 
 /* reset error tracking */
-int de_clear_error(void);
+DE_API int de_clear_error(void);
 
 /* positive error codes come from sqlite: https://sqlite.org/rescode.html */
 typedef enum

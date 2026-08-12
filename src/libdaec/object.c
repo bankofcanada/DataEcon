@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <ctype.h>
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "object.h"
@@ -60,7 +61,7 @@ int new_object(de_file de, obj_id_t pid, class_t class, type_t type, const char 
     return DE_SUCCESS;
 }
 
-int de_find_object(de_file db, obj_id_t pid, const char *name, obj_id_t *id)
+DE_API int de_find_object(de_file db, obj_id_t pid, const char *name, obj_id_t *id)
 {
     if (db == NULL || name == NULL)
         return error(DE_NULL);
@@ -68,7 +69,7 @@ int de_find_object(de_file db, obj_id_t pid, const char *name, obj_id_t *id)
     return DE_SUCCESS;
 }
 
-int de_load_object(de_file de, obj_id_t id, object_t *object)
+DE_API int de_load_object(de_file de, obj_id_t id, object_t *object)
 {
     if (de == NULL || object == NULL)
         return error(DE_NULL);
@@ -76,7 +77,7 @@ int de_load_object(de_file de, obj_id_t id, object_t *object)
     return DE_SUCCESS;
 }
 
-int de_delete_object(de_file de, obj_id_t id)
+DE_API int de_delete_object(de_file de, obj_id_t id)
 {
     if (de == NULL)
         return error(DE_NULL);
@@ -84,7 +85,7 @@ int de_delete_object(de_file de, obj_id_t id)
     return DE_SUCCESS;
 }
 
-int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *value)
+DE_API int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *value)
 {
     if (de == NULL || name == NULL)
         return error(DE_NULL);
@@ -92,7 +93,7 @@ int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *valu
     return DE_SUCCESS;
 }
 
-int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **value)
+DE_API int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **value)
 {
     if (de == NULL || name == NULL || value == NULL)
         return error(DE_NULL);
@@ -100,7 +101,7 @@ int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **val
     return DE_SUCCESS;
 }
 
-int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
+DE_API int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
                           int64_t *nattr, const char **names, const char **values)
 {
     if (de == NULL || delim == NULL || nattr == NULL)
@@ -109,7 +110,7 @@ int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
     return DE_SUCCESS;
 }
 
-int de_get_object_info(de_file de, obj_id_t id, const char **fullpath, int64_t *depth, int64_t *created)
+DE_API int de_get_object_info(de_file de, obj_id_t id, const char **fullpath, int64_t *depth, int64_t *created)
 {
     if (de == NULL || (fullpath == NULL && depth == NULL && created == NULL))
         return error(DE_NULL);
@@ -119,7 +120,7 @@ int de_get_object_info(de_file de, obj_id_t id, const char **fullpath, int64_t *
     return DE_SUCCESS;
 }
 
-int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
+DE_API int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
 {
     if (de == NULL || fullpath == NULL || id == NULL)
         return error(DE_NULL);
@@ -134,7 +135,7 @@ int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
     return DE_SUCCESS;
 }
 
-int de_catalog_size(de_file de, obj_id_t pid, int64_t *count)
+DE_API int de_catalog_size(de_file de, obj_id_t pid, int64_t *count)
 {
     if (de == NULL || count == NULL)
         return error(DE_NULL);

@@ -7,6 +7,7 @@
 
 #include <sqlite3.h>
 
+#include "config.h"
 #include "file.h"
 #include "dates.h"
 
@@ -68,38 +69,36 @@ typedef struct
 } object_t;
 
 /* find object id from parent and name */
-int de_find_object(de_file de, obj_id_t pid, const char *name, obj_id_t *id);
+DE_API int de_find_object(de_file de, obj_id_t pid, const char *name, obj_id_t *id);
 
 /* load object from id*/
-int de_load_object(de_file de, obj_id_t id, object_t *object);
+DE_API int de_load_object(de_file de, obj_id_t id, object_t *object);
 
 /* delete object given id*/
-int de_delete_object(de_file de, obj_id_t id);
+DE_API int de_delete_object(de_file de, obj_id_t id);
 
 /* set attribute by name */
-int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *value);
+DE_API int de_set_attribute(de_file de, obj_id_t id, const char *name, const char *value);
 
 /* get attribute by name */
 /* memory for value is handled by the library and is valid until the next library call */
-int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **value);
+DE_API int de_get_attribute(de_file de, obj_id_t id, const char *name, const char **value);
 
 /* get all attribute names and values, each in a single string, delimited by `delim` */
 /* memory for names and values is handled by the library and is valid until the next library call */
-int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
-                          int64_t *nattr, const char **names, const char **values);
+DE_API int de_get_all_attributes(de_file de, obj_id_t id, const char *delim,
+                              int64_t *nattr, const char **names, const char **values);
 
 /* get the full path of an object from its id */
 /* memory for fullpath is handled by the library and is valid until the next library call */
-int de_get_object_info(de_file de, obj_id_t id,
-                       const char **fullpath, int64_t *depth, int64_t *created);
+DE_API int de_get_object_info(de_file de, obj_id_t id,
+                           const char **fullpath, int64_t *depth, int64_t *created);
 
 /* get the id of an object from its fullpath */
-int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id);
+DE_API int de_find_fullpath(de_file de, const char *fullpath, obj_id_t *id);
 
 /* count the number of objects immediately in the given catalog */
-int de_catalog_size(de_file de, obj_id_t pid, int64_t *count);
-
-/* ========================================================================= */
+DE_API int de_catalog_size(de_file de, obj_id_t pid, int64_t *count);/* ========================================================================= */
 /* internal */
 
 int new_object(de_file de, obj_id_t pid, class_t class, type_t type,

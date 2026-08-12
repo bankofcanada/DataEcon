@@ -6,6 +6,7 @@
 
 #include <sqlite3.h>
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "object.h"
@@ -97,7 +98,7 @@ static int _prepare_search(de_file de, int64_t pid, const char *wc, type_t type,
     return DE_SUCCESS;
 }
 
-int de_list_catalog(de_file de, obj_id_t pid, de_search *search)
+DE_API int de_list_catalog(de_file de, obj_id_t pid, de_search *search)
 {
     if (de == NULL || search == NULL)
         return error(DE_NULL);
@@ -108,7 +109,7 @@ int de_list_catalog(de_file de, obj_id_t pid, de_search *search)
     return DE_SUCCESS;
 }
 
-int de_search_catalog(de_file de, obj_id_t pid, const char *wc, type_t type, class_t class, de_search *search)
+DE_API int de_search_catalog(de_file de, obj_id_t pid, const char *wc, type_t type, class_t class, de_search *search)
 {
     if (de == NULL || search == NULL)
         return error(DE_NULL);
@@ -119,7 +120,7 @@ int de_search_catalog(de_file de, obj_id_t pid, const char *wc, type_t type, cla
     return DE_SUCCESS;
 }
 
-int de_next_object(de_search search, object_t *object)
+DE_API int de_next_object(de_search search, object_t *object)
 {
     if (search == NULL || object == NULL)
         return error(DE_NULL);
@@ -139,7 +140,7 @@ int de_next_object(de_search search, object_t *object)
     }
 }
 
-int de_finalize_search(de_search search)
+DE_API int de_finalize_search(de_search search)
 {
     if (search == NULL)
         return DE_SUCCESS;

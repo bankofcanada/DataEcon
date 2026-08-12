@@ -433,8 +433,8 @@ extern "C"
     /* Release resources allocated for the given search. */
     int de_finalize_search(de_search search);
 
-    /* ***************************** search ************************************** */
     /* ******************** matlab pointer extractors **************************** */
+
     double get_double_from_voidptr(const void* p);
     int64_t get_int64_from_voidptr(const void* p);
     uint64_t get_uint64_from_voidptr(const void* p);

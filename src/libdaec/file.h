@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include <sqlite3.h>
+#include "config.h"
 
 /* ========================================================================= */
 /* API */
@@ -13,19 +14,19 @@ typedef struct de_file_s de_file_t;
 typedef de_file_t *de_file;
 
 /* open daec file in read-write mode (if write-protected it might either get opened in read-only mode or fail)*/
-int de_open(const char *fname, de_file *de);
+DE_API int de_open(const char *fname, de_file *de);
 
 /* open daec file in read-only mode */
-int de_open_readonly(const char *fname, de_file *de);
+DE_API int de_open_readonly(const char *fname, de_file *de);
 
 /* open a daec database in memory */
-int de_open_memory(de_file *pde);
+DE_API int de_open_memory(de_file *pde);
 
 /* close a previously opened daec file */
-int de_close(de_file de);
+DE_API int de_close(de_file de);
 
 /* delete everything in the given daec file */
-int de_truncate(de_file de);
+DE_API int de_truncate(de_file de);
 
 /* ========================================================================= */
 /* internal */

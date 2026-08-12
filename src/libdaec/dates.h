@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "config.h"
 #include "file.h"
 #include "object.h"
 
@@ -93,10 +94,10 @@ typedef enum
 
 typedef int64_t date_t;
 
-int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, date_t *date);
-int de_unpack_year_period_date(frequency_t freq, date_t date, int32_t *year, uint32_t *period);
+DE_API int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, date_t *date);
+DE_API int de_unpack_year_period_date(frequency_t freq, date_t date, int32_t *year, uint32_t *period);
 
-int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32_t day, date_t *date);
-int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32_t *month, uint32_t *day);
+DE_API int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32_t day, date_t *date);
+DE_API int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32_t *month, uint32_t *day);
 
 #endif

@@ -14,7 +14,7 @@ bool check_ndtseries_type(type_t type)
 }
 
 /* create a new Nd-array object in a given parent catalog */
-int de_store_ndtseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
+DE_API int de_store_ndtseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
                        type_t eltype, frequency_t elfreq,
                        int64_t naxes, const axis_id_t *axis_ids,
                        int64_t nbytes, const void *value,
@@ -39,7 +39,7 @@ int de_store_ndtseries(de_file de, obj_id_t pid, const char *name, type_t obj_ty
 }
 
 /* load a Nd-array object by name from a given parent catalog */
-int de_load_ndtseries(de_file de, obj_id_t id, ndtseries_t *ndtseries)
+DE_API int de_load_ndtseries(de_file de, obj_id_t id, ndtseries_t *ndtseries)
 {
     if (de == NULL || ndtseries == NULL)
         return error(DE_NULL);
@@ -50,7 +50,7 @@ int de_load_ndtseries(de_file de, obj_id_t id, ndtseries_t *ndtseries)
     return DE_SUCCESS;
 }
 
-int de_load_ndtseries_axis_ids(de_file de, obj_id_t id, axis_id_t *axis_ids)
+DE_API int de_load_ndtseries_axis_ids(de_file de, obj_id_t id, axis_id_t *axis_ids)
 {
     if (de == NULL)
         return error(DE_NULL);
@@ -59,7 +59,7 @@ int de_load_ndtseries_axis_ids(de_file de, obj_id_t id, axis_id_t *axis_ids)
     return DE_SUCCESS;
 }
 
-int de_load_ndtseries_eltype_elfreq(de_file de, obj_id_t id, type_t *eltype, frequency_t *elfreq)
+DE_API int de_load_ndtseries_eltype_elfreq(de_file de, obj_id_t id, type_t *eltype, frequency_t *elfreq)
 {
     if (de == NULL)
         return error(DE_NULL);
@@ -68,7 +68,7 @@ int de_load_ndtseries_eltype_elfreq(de_file de, obj_id_t id, type_t *eltype, fre
     return DE_SUCCESS;
 }
 
-int de_load_ndtseries_value(de_file de, obj_id_t id, const void **value)
+DE_API int de_load_ndtseries_value(de_file de, obj_id_t id, const void **value)
 {
     if (de == NULL)
         return error(DE_NULL);

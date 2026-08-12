@@ -10,16 +10,16 @@ jobs:
   build_linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: install_lcov
         run: sudo apt-get install lcov
       - name: test_with_coverage
         run: |
-          echo "Run test with coverage"
+          echo "Running tests with coverage"
           make testcov
           make coverage
       - name: upload_codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./lcov.info

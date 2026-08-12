@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "object.h"
@@ -280,7 +281,7 @@ static int _decode_calendar(frequency_t freq, int32_t N, int32_t *year, uint32_t
 /*****************************************************************************************/
 /* pack and unpack dates given by year and period */
 
-int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, date_t *date)
+DE_API int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, date_t *date)
 {
     if (date == NULL)
         return error(DE_NULL);
@@ -298,7 +299,7 @@ int de_pack_year_period_date(frequency_t freq, int32_t year, uint32_t period, da
     return DE_SUCCESS;
 }
 
-int de_unpack_year_period_date(frequency_t freq, date_t date, int32_t *year, uint32_t *period)
+DE_API int de_unpack_year_period_date(frequency_t freq, date_t date, int32_t *year, uint32_t *period)
 {
     if (year == NULL || period == NULL)
         return error(DE_NULL);
@@ -323,7 +324,7 @@ int de_unpack_year_period_date(frequency_t freq, date_t date, int32_t *year, uin
 /*****************************************************************************************/
 /* pack and unpack dates given by year, month and day */
 
-int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32_t day, date_t *date)
+DE_API int de_pack_calendar_date(frequency_t freq, int32_t year, uint32_t month, uint32_t day, date_t *date)
 {
     if (date == NULL)
         return error(DE_NULL);
@@ -362,7 +363,7 @@ static uint32_t _days_in_month(int32_t Y, uint32_t M)
     return 31 - M % 2;
 }
 
-int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32_t *month, uint32_t *day)
+DE_API int de_unpack_calendar_date(frequency_t freq, date_t date, int32_t *year, uint32_t *month, uint32_t *day)
 {
     if (year == NULL || month == NULL || day == NULL)
         return error(DE_NULL);

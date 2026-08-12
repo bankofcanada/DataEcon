@@ -10,10 +10,10 @@
 /* API */
 
 /* return a static string containing the library version in format "x.y.z" */
-const char *de_version(void);
+DE_API const char *de_version(void);
 
 /* returns the current setting for DE_MAX_AXES*/
-int de_max_axes(void);
+DE_API int de_max_axes(void);
 
 /*
     pack a vector of strings into a contiguous memory buffer.
@@ -33,7 +33,7 @@ int de_max_axes(void);
       representation into `buffer` (must not be NULL) and the number of bytes
       actually used in `*bufsize`.
 */
-int de_pack_strings(const char **strvec, int64_t length, char *buffer, int64_t *bufsize);
+DE_API int de_pack_strings(const char **strvec, int64_t length, char *buffer, int64_t *bufsize);
 
 /* "unpack" a buffer of strings into a vector of '\0'- terminated strings
    this may be needed after reading an array of strings
@@ -47,7 +47,27 @@ int de_pack_strings(const char **strvec, int64_t length, char *buffer, int64_t *
     * all pointes written in `strvec` point between `buffer` and
       `buffer + bufsize - 1`.
 */
-int de_unpack_strings(const char *buffer, int64_t bufsize, const char **strvec, int64_t length);
+DE_API int de_unpack_strings(const char *buffer, int64_t bufsize, const char **strvec, int64_t length);
+
+/* ******************** matlab pointer extractors **************************** */
+
+DE_API double get_double_from_voidptr(const void* p);
+DE_API int64_t get_int64_from_voidptr(const void* p);
+DE_API uint64_t get_uint64_from_voidptr(const void* p);
+DE_API const char* get_string_from_voidptr(const void* p);
+DE_API double get_complex_real_from_voidptr(const void* p);
+DE_API double get_complex_imag_from_voidptr(const void* p);
+/* Array/Vector access functions with byte offset */
+DE_API double get_double_from_voidptr_offset(const void* p, size_t byte_offset);
+DE_API int64_t get_int64_from_voidptr_offset(const void* p, size_t byte_offset);
+DE_API uint64_t get_uint64_from_voidptr_offset(const void* p, size_t byte_offset);
+/* Vectorized array extraction functions for performance optimization */
+/* Copy array of values from void pointer to pre-allocated output array */
+DE_API void get_double_array_from_voidptr(const void* p, size_t length, double* output);
+DE_API void get_int64_array_from_voidptr(const void* p, size_t length, int64_t* output);
+DE_API void get_uint64_array_from_voidptr(const void* p, size_t length, uint64_t* output);
+DE_API int32_t get_int32_from_voidptr(const void* p);
+DE_API signed char get_char_from_voidptr(const void* p);
 
 /* ========================================================================= */
 /* internal */

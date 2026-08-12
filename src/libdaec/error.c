@@ -30,7 +30,7 @@ static error_t last_error = {
     .source_trace = "\0",
 };
 
-int de_clear_error(void)
+DE_API int de_clear_error(void)
 {
     /* we don't free memory for s3_msg: it is managed by sqlite3 https://www.sqlite.org/c3ref/errcode.html */
     if (last_error.arg)
@@ -104,7 +104,7 @@ int set_trace_error(const char *func, const char *file, int line)
 }
 
 /* return last error code, fill in last error message in user-supplied buffer and clear error */
-int de_error(char *restrict msg, size_t len)
+DE_API int de_error(char *restrict msg, size_t len)
 {
     const static char fmt[] = "DE(%d): %s";
     const static char fmt1[] = "DE(%d): %s -- %s";
@@ -207,7 +207,7 @@ int de_error(char *restrict msg, size_t len)
 }
 
 /* (for use by developers) same as de_error(), but also add information about where in the code the error happened */
-int de_error_source(char *restrict msg, size_t total_len)
+DE_API int de_error_source(char *restrict msg, size_t total_len)
 {
     error_t le;
     memcpy(&le, &last_error, sizeof le);

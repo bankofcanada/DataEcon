@@ -5,6 +5,7 @@
 
 #include <sqlite3.h>
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "sql.h"
@@ -276,19 +277,19 @@ static int _open(const char *fname, de_file *pde, int flags)
     return DE_SUCCESS;
 }
 
-int de_open(const char *fname, de_file *pde)
+DE_API int de_open(const char *fname, de_file *pde)
 {
     TRACE_RUN(_open(fname, pde, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
     return DE_SUCCESS;
 }
 
-int de_open_readonly(const char *fname, de_file *pde)
+DE_API int de_open_readonly(const char *fname, de_file *pde)
 {
     TRACE_RUN(_open(fname, pde, SQLITE_OPEN_READONLY));
     return DE_SUCCESS;
 }
 
-int de_open_memory(de_file *pde)
+DE_API int de_open_memory(de_file *pde)
 {
     TRACE_RUN(_open(":memory:", pde, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY));
     return DE_SUCCESS;
@@ -330,7 +331,7 @@ static int _fin_stmts(de_file de)
     return DE_SUCCESS;
 }
 
-int de_close(de_file de)
+DE_API int de_close(de_file de)
 {
     if (de == NULL)
         return DE_SUCCESS;
@@ -342,7 +343,7 @@ int de_close(de_file de)
     return DE_SUCCESS;
 }
 
-int de_truncate(de_file de)
+DE_API int de_truncate(de_file de)
 {
     if (de == NULL)
         return error(DE_NULL);

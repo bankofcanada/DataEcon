@@ -3,12 +3,13 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "object.h"
 #include "catalog.h"
 
-int de_new_catalog(de_file de, obj_id_t pid, const char *name, obj_id_t *id)
+DE_API int de_new_catalog(de_file de, obj_id_t pid, const char *name, obj_id_t *id)
 {
     if (de == NULL || name == NULL)
         return error(DE_NULL);
