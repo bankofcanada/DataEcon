@@ -578,7 +578,7 @@ classdef DEFile < handle
                 end
             end
         end
-        
+
     end
 
     methods % write helpers

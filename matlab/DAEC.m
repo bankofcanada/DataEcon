@@ -45,17 +45,20 @@ classdef DAEC < handle
                 return
             end
             % find the library and load it
-            hpath = fullfile('..','include', 'daec.h');
+            hpath = fullfile(daecroot,'include', 'daec.h');
+
             switch computer()
                 case {'PCWIN', 'PCWIN64'}
-                    libpath = fullfile('..', 'bin', 'libdaec.dll');
+                    libpath = fullfile(daecroot, 'bin', 'libdaec.dll');
                 case {'GLNX86', 'GLNXA64'}
-                    libpath = fullfile('..', 'lib', 'libdaec.so');
+                    libpath = fullfile(daecroot, 'lib', 'libdaec.so');
                 otherwise
                     error('DataEcon not supported on your platform.');
             end
             % capture output args to suppress warnings
+            warning('off','MATLAB:loadlibrary:TypeNotFoundForStructure');
             [~,~] = loadlibrary(libpath, hpath, 'alias', 'libdaec');
+            warning('on','MATLAB:loadlibrary:TypeNotFoundForStructure');
             % [~,~] = loadlibrary(libpath, hpath, mfilename='daecinfo');
             if not(strcmp(daec.enums.version, DAEC.version))
                 warning('Incompatible DAEC version.')
@@ -88,10 +91,11 @@ classdef DAEC < handle
                 path {mustBeTextScalar} = ''
                 NameValueArgs.memory (1,1) {mustBeNumericOrLogical} = false
                 NameValueArgs.read_to_iris (1,1) {mustBeNumericOrLogical} = false
+                NameValueArgs.read_to_tse (1,1) {mustBeNumericOrLogical} = false
                 NameValueArgs.iris_colnames_field {mustBeTextScalar} = ''
             end
-            
-            de = DEFile(path, 'memory', NameValueArgs.memory, 'readonly', true, 'read_to_iris', NameValueArgs.read_to_iris, 'iris_colnames_field', NameValueArgs.iris_colnames_field);
+
+            de = DEFile(path, 'memory', NameValueArgs.memory, 'readonly', true, 'read_to_iris', NameValueArgs.read_to_iris, 'read_to_tse', NameValueArgs.read_to_tse, 'iris_colnames_field', NameValueArgs.iris_colnames_field);
             db = de.read();
             de.close();
         end
@@ -370,15 +374,24 @@ classdef DAEC < handle
                 start_date = DAEC.iris_date(iris_freq, axes);
                 end_date = start_date + (axes.length - 1);
                 if make_tseries
-                    iris_series = tseries(start_date:end_date, data);
+                    iris_series = tseries(start_date:end_date, Inf);
+                    iris_series.data = data;
                     if isfield(attr, 'Comment')
-                        iris_series.Comment = attr.Comment;
+                        if isa(attr.Comment, 'char')
+                            iris_series.Comment = {attr.Comment};
+                        else
+                            iris_series.Comment = attr.Comment;
+                        end
                     end
                 else
                     iris_series = Series(start_date:end_date, data);
                     for f = fieldnames(attr)'
                         if strcmp(f{1}, 'Comment') == 1
-                            iris_series.Comment = attr.Comment;
+                            if isa(attr.Comment, 'char')
+                                iris_series.Comment = {attr.Comment};
+                            else
+                                iris_series.Comment = attr.Comment;
+                            end
                         else
                             iris_series.UserData.(f{1}) = attr.(f{1});
                         end
@@ -390,13 +403,18 @@ classdef DAEC < handle
                 start_date = DAEC.iris_date(iris_freq, axes(1));
                 end_date = start_date + (axes(1).length - 1);
                 if make_tseries
-                    iris_series = tseries(start_date:end_date, data);
+                    iris_series = tseries(start_date:end_date, Inf);
+                    iris_series.data = data;
                     iris_series.Comment = axes(2).names;
                 else
                     iris_series = Series(start_date:end_date, data);
                     for f = fieldnames(attr)'
                         if strcmp(f{1}, 'Comment') == 1
-                            iris_series.Comment = attr.Comment;
+                            if isa(attr.Comment, 'char')
+                                iris_series.Comment = {attr.Comment};
+                            else
+                                iris_series.Comment = attr.Comment;
+                            end
                         elseif strcmp(f{1}, 'iris_colnames_field')
                             iris_series.UserData.(attr.(f{1})) = axes(2).names;
                         else
