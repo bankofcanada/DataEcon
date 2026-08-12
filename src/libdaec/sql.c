@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "config.h"
 #include "error.h"
@@ -24,9 +25,27 @@
             return rc_error(rc);          \
     }
 
+/* helper functions for formatting error messages */
+    
+static const char *_id2str(int64_t id)
+{
+    static char buffer[100];
+    snprintf(buffer, 100, "id=%" PRId64, id);
+    return buffer;
+}
+
+static const char *_pidnm2str(int64_t pid, const char *name)
+{
+    static char buffer[100];
+    snprintf(buffer, 100, "pid=%" PRId64 ",name='%s'", pid, name);
+    return buffer;
+}
+
+/* ************************************************************************* */
+
 int sql_find_object(de_file de, obj_id_t pid, const char *name, obj_id_t *id)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_find_object);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_find_object);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -46,7 +65,7 @@ int sql_find_object(de_file de, obj_id_t pid, const char *name, obj_id_t *id)
     }
 }
 
-void _fill_object(sqlite3_stmt *stmt, object_t *object)
+void sql_fill_object(sqlite3_stmt *stmt, object_t *object)
 {
     object->id = sqlite3_column_int64(stmt, 0);
     object->pid = sqlite3_column_int64(stmt, 1);
@@ -57,7 +76,7 @@ void _fill_object(sqlite3_stmt *stmt, object_t *object)
 
 int sql_load_object(de_file de, obj_id_t id, object_t *object)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_load_object);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_object);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -66,7 +85,7 @@ int sql_load_object(de_file de, obj_id_t id, object_t *object)
     switch ((rc = sqlite3_step(stmt)))
     {
     case SQLITE_ROW:
-        _fill_object(stmt, object);
+        sql_fill_object(stmt, object);
         return DE_SUCCESS;
     case SQLITE_DONE:
         return error1(DE_OBJ_DNE, _id2str(id));
@@ -78,7 +97,7 @@ int sql_load_object(de_file de, obj_id_t id, object_t *object)
 
 int sql_new_object(de_file de, obj_id_t pid, class_t class, type_t type, const char *name)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_new_object);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_new_object);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -93,7 +112,7 @@ int sql_new_object(de_file de, obj_id_t pid, class_t class, type_t type, const c
 
 int sql_new_object_info(de_file de, obj_id_t id)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_new_object_info);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_new_object_info);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -105,7 +124,7 @@ int sql_new_object_info(de_file de, obj_id_t id)
 
 int sql_delete_object(de_file de, obj_id_t id)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_delete_object);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_delete_object);
     if (stmt == NULL)
         return trace_error();
     if (id == 0)
@@ -119,7 +138,7 @@ int sql_delete_object(de_file de, obj_id_t id)
 
 int sql_set_attribute(de_file de, int64_t id, const char *name, const char *value)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_set_attribute);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_set_attribute);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -140,7 +159,7 @@ int sql_set_attribute(de_file de, int64_t id, const char *name, const char *valu
 
 int sql_get_attribute(de_file de, int64_t id, const char *name, const char **value)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_get_attribute);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_get_attribute);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -163,7 +182,7 @@ int sql_get_attribute(de_file de, int64_t id, const char *name, const char **val
 int sql_get_all_attributes(de_file de, obj_id_t id, const char *delim,
                            int64_t *nattr, const char **names, const char **values)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_get_all_attributes);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_get_all_attributes);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -191,7 +210,7 @@ int sql_get_all_attributes(de_file de, obj_id_t id, const char *delim,
 
 int sql_get_object_info(de_file de, obj_id_t id, const char **fullpath, int64_t *depth, int64_t *created)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_get_object_info);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_get_object_info);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -216,7 +235,7 @@ int sql_get_object_info(de_file de, obj_id_t id, const char **fullpath, int64_t 
 
 int sql_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_find_fullpath);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_find_fullpath);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -236,7 +255,7 @@ int sql_find_fullpath(de_file de, const char *fullpath, obj_id_t *id)
 
 int sql_store_scalar_value(de_file de, obj_id_t id, frequency_t frequency, int64_t nbytes, const void *value)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_store_scalar);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_store_scalar);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -255,7 +274,7 @@ int sql_store_scalar_value(de_file de, obj_id_t id, frequency_t frequency, int64
     return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
 }
 
-void _fill_scalar(sqlite3_stmt *stmt, scalar_t *scalar)
+static void _fill_scalar(sqlite3_stmt *stmt, scalar_t *scalar)
 {
     obj_id_t id = sqlite3_column_int64(stmt, 0);
     if (id != scalar->object.id)
@@ -267,7 +286,7 @@ void _fill_scalar(sqlite3_stmt *stmt, scalar_t *scalar)
 
 int sql_load_scalar_value(de_file de, obj_id_t id, scalar_t *scalar)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_load_scalar);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_scalar);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -289,7 +308,7 @@ int sql_load_scalar_value(de_file de, obj_id_t id, scalar_t *scalar)
 /******************************************************************/
 /* axis */
 
-int _fill_axis(sqlite3_stmt *stmt, axis_t *axis)
+static int _fill_axis(sqlite3_stmt *stmt, axis_t *axis)
 {
     axis->id = sqlite3_column_int64(stmt, 0);
     axis->ax_type = sqlite3_column_int(stmt, 1);
@@ -317,7 +336,7 @@ int _fill_axis(sqlite3_stmt *stmt, axis_t *axis)
 
 int sql_load_axis(de_file de, axis_id_t id, axis_t *axis)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_load_axis);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_axis);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -337,7 +356,7 @@ int sql_load_axis(de_file de, axis_id_t id, axis_t *axis)
 
 int sql_find_axis(de_file de, axis_t *axis)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_find_axis);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_find_axis);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -383,7 +402,7 @@ int sql_find_axis(de_file de, axis_t *axis)
 
 int sql_new_axis(de_file de, axis_t *axis)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_new_axis);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_new_axis);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -422,7 +441,7 @@ int sql_store_tseries_value(de_file de, obj_id_t id,
                             axis_id_t axis_id, int64_t nbytes,
                             const void *value)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_store_tseries);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_store_tseries);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -443,7 +462,7 @@ int sql_store_tseries_value(de_file de, obj_id_t id,
     return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
 }
 
-void _fill_tseries(sqlite3_stmt *stmt, tseries_t *tseries)
+static void _fill_tseries(sqlite3_stmt *stmt, tseries_t *tseries)
 {
     obj_id_t id = sqlite3_column_int64(stmt, 0);
     if (id != tseries->object.id)
@@ -457,7 +476,7 @@ void _fill_tseries(sqlite3_stmt *stmt, tseries_t *tseries)
 
 int sql_load_tseries_value(de_file de, obj_id_t id, tseries_t *tseries)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_load_tseries);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_tseries);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -484,7 +503,7 @@ int sql_store_mvtseries_value(de_file de, obj_id_t id,
                               axis_id_t axis1_id, axis_id_t axis2_id,
                               int64_t nbytes, const void *value)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_store_mvtseries);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_store_mvtseries);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -506,7 +525,7 @@ int sql_store_mvtseries_value(de_file de, obj_id_t id,
     return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
 }
 
-void _fill_mvtseries(sqlite3_stmt *stmt, mvtseries_t *mvtseries)
+static void _fill_mvtseries(sqlite3_stmt *stmt, mvtseries_t *mvtseries)
 {
     obj_id_t id = sqlite3_column_int64(stmt, 0);
     if (id != mvtseries->object.id)
@@ -521,7 +540,7 @@ void _fill_mvtseries(sqlite3_stmt *stmt, mvtseries_t *mvtseries)
 
 int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_load_mvtseries);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_mvtseries);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -547,7 +566,7 @@ int sql_load_mvtseries_value(de_file de, obj_id_t id, mvtseries_t *mvtseries)
 int sql_store_ndtseries_value(de_file de, obj_id_t id, type_t eltype, frequency_t elfreq,
                               int64_t nbytes, const void *value)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_store_ndtseries);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_store_ndtseries);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -569,7 +588,7 @@ int sql_store_ndtseries_value(de_file de, obj_id_t id, type_t eltype, frequency_
 
 int sql_store_ndaxes(de_file de, obj_id_t obj_id, int64_t axis_index, axis_id_t axis_id)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_store_ndaxes);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_store_ndaxes);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -581,7 +600,7 @@ int sql_store_ndaxes(de_file de, obj_id_t obj_id, int64_t axis_index, axis_id_t 
     return rc == SQLITE_DONE ? DE_SUCCESS : rc_error(rc);
 }
 
-void _fill_ndtseries(sqlite3_stmt *stmt, ndtseries_t *ndtseries)
+static void _fill_ndtseries(sqlite3_stmt *stmt, ndtseries_t *ndtseries)
 {
     obj_id_t id = sqlite3_column_int64(stmt, 0);
     if (id != ndtseries->object.id)
@@ -592,9 +611,9 @@ void _fill_ndtseries(sqlite3_stmt *stmt, ndtseries_t *ndtseries)
     ndtseries->value = sqlite3_column_blob(stmt, 3);
 }
 
-int _sql_load_ndaxes(de_file de, ndtseries_t *ndtseries)
+static int _sql_load_ndaxes(de_file de, ndtseries_t *ndtseries)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_load_ndaxes);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_ndaxes);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -628,9 +647,41 @@ int _sql_load_ndaxes(de_file de, ndtseries_t *ndtseries)
     }
 }
 
+int sql_load_ndaxes_ids(de_file de, obj_id_t obj_id, axis_id_t *axes_ids)
+{
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_ndaxes_ids);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    int results_n;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, obj_id));
+    for (int n = 0; n < DE_MAX_AXES; ++n)
+    {
+        axes_ids[n] = -1;
+    }
+    results_n = 0;
+    while (1)
+    {
+        switch ((rc = sqlite3_step(stmt)))
+        {
+        case SQLITE_ROW:
+        {
+            axes_ids[results_n] = sqlite3_column_int64(stmt, 0);
+            ++results_n;
+            break;
+        }
+        case SQLITE_DONE:
+            return DE_SUCCESS;
+        default:
+            return rc_error(rc);
+        }
+    }
+}
+
 int sql_load_ndtseries_value(de_file de, obj_id_t id, ndtseries_t *ndtseries)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_load_ndtseries);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_ndtseries);
     if (stmt == NULL)
         return trace_error();
     int rc;
@@ -649,12 +700,54 @@ int sql_load_ndtseries_value(de_file de, obj_id_t id, ndtseries_t *ndtseries)
     }
 }
 
+int sql_load_ndtseries_value_field(de_file de, obj_id_t id, const void **value)
+{
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_ndtseries_value);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
+    switch ((rc = sqlite3_step(stmt)))
+    {
+    case SQLITE_ROW:
+        *value = sqlite3_column_blob(stmt, 1);
+        return DE_SUCCESS;
+    case SQLITE_DONE:
+        return error(DE_BAD_OBJ);
+    default:
+        return rc_error(rc);
+    }
+}
+
+int sql_load_ndtseries_eltype_elfreq(de_file de, obj_id_t id, type_t *eltype, frequency_t *elfreq)
+{
+    sqlite3_stmt *stmt = sql_statement(de, stmt_load_ndtseries_eltype_elfreq);
+    if (stmt == NULL)
+        return trace_error();
+    int rc;
+    CHECK_SQLITE(sqlite3_reset(stmt));
+    CHECK_SQLITE(sqlite3_bind_int64(stmt, 1, id));
+    switch ((rc = sqlite3_step(stmt)))
+    {
+    case SQLITE_ROW:
+        *eltype = sqlite3_column_int(stmt, 1);
+        *elfreq = sqlite3_column_int(stmt, 2);
+        return DE_SUCCESS;
+    case SQLITE_DONE:
+        return error(DE_BAD_OBJ);
+    default:
+        return rc_error(rc);
+    }
+}
+
+
 /**************************************************************/
 /* count */
 
 int sql_count_objects(de_file de, obj_id_t pid, int64_t *count)
 {
-    sqlite3_stmt *stmt = _get_statement(de, stmt_count_objects);
+    sqlite3_stmt *stmt = sql_statement(de, stmt_count_objects);
     if (stmt == NULL)
         return trace_error();
     int rc;

@@ -5,6 +5,7 @@
 
 #include <sqlite3.h>
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "sql.h"
@@ -16,7 +17,7 @@
     if (SQLITE_OK != sqlite3_exec((de)->db, (sql), NULL, NULL, NULL)) \
         return db_error(de);
 
-int _init_file(de_file de)
+static int _init_file(de_file de)
 {
     /* make tables */
     RUN_SQL(de,
@@ -122,7 +123,7 @@ int _init_file(de_file de)
     return DE_SUCCESS;
 }
 
-const char *_get_statement_sql(stmt_name_t stmt_name)
+static const char *_get_sql_text(stmt_name_t stmt_name)
 {
     switch (stmt_name)
     {
@@ -160,6 +161,14 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
         return "SELECT `id`, `eltype`, `elfreq`, `axis1_id`, `axis2_id`, `value` FROM `mvtseries` WHERE `id` = ?;";
     case stmt_load_ndtseries:
         return "SELECT `id`, `eltype`, `elfreq`, `value` FROM `ndtseries` WHERE `id` = ?;";
+    case stmt_load_ndtseries_value:
+        return "SELECT `id`, `value` FROM `ndtseries` WHERE `id` = ?;";
+    case stmt_load_ndtseries_eltype_elfreq:
+        return "SELECT `id`, `eltype`, `elfreq` FROM `ndtseries` WHERE `id` = ?;";
+    case stmt_load_ndaxes_ids:
+        return "SELECT `axes`.`id`, `ndaxes`.`axis_index`"
+               "FROM `ndaxes` LEFT JOIN `axes` ON `ndaxes`.`axis_id` = `axes`.`id` "
+               "WHERE `ndaxes`.`obj_id` = ? ORDER BY `ndaxes`.`axis_index`";
     case stmt_load_ndaxes:
         return "SELECT `axes`.*, `ndaxes`.`axis_index` "
                "FROM `ndaxes` LEFT JOIN `axes` ON `ndaxes`.`axis_id` = `axes`.`id` "
@@ -186,7 +195,7 @@ const char *_get_statement_sql(stmt_name_t stmt_name)
     }
 }
 
-sqlite3_stmt *_get_statement(de_file de, stmt_name_t stmt_name)
+sqlite3_stmt *sql_statement(de_file de, stmt_name_t stmt_name)
 {
     if ((stmt_name < 0) || (stmt_size <= stmt_name))
     {
@@ -196,7 +205,7 @@ sqlite3_stmt *_get_statement(de_file de, stmt_name_t stmt_name)
     sqlite3_stmt *stmt = de->stmt[stmt_name];
     if (stmt != NULL)
         return stmt;
-    const char *sql = _get_statement_sql(stmt_name);
+    const char *sql = _get_sql_text(stmt_name);
     if (sql == NULL)
     {
         trace_error();
@@ -211,7 +220,17 @@ sqlite3_stmt *_get_statement(de_file de, stmt_name_t stmt_name)
     return stmt;
 }
 
-int _open(const char *fname, de_file *pde, int flags)
+/* check if a file exists at the given path */
+static bool _isfile(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    if (f == NULL)
+        return false;
+    fclose(f);
+    return true;
+}
+
+static int _open(const char *fname, de_file *pde, int flags)
 {
 
     if (pde == NULL)
@@ -258,19 +277,19 @@ int _open(const char *fname, de_file *pde, int flags)
     return DE_SUCCESS;
 }
 
-int de_open(const char *fname, de_file *pde)
+DE_API int de_open(const char *fname, de_file *pde)
 {
     TRACE_RUN(_open(fname, pde, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
     return DE_SUCCESS;
 }
 
-int de_open_readonly(const char *fname, de_file *pde)
+DE_API int de_open_readonly(const char *fname, de_file *pde)
 {
     TRACE_RUN(_open(fname, pde, SQLITE_OPEN_READONLY));
     return DE_SUCCESS;
 }
 
-int de_open_memory(de_file *pde)
+DE_API int de_open_memory(de_file *pde)
 {
     TRACE_RUN(_open(":memory:", pde, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MEMORY));
     return DE_SUCCESS;
@@ -297,7 +316,7 @@ int de_begin_transaction(de_file de)
     return DE_SUCCESS;
 }
 
-int _fin_stmts(de_file de)
+static int _fin_stmts(de_file de)
 {
     for (stmt_name_t i = 0; i < stmt_last; ++i)
     {
@@ -312,7 +331,7 @@ int _fin_stmts(de_file de)
     return DE_SUCCESS;
 }
 
-int de_close(de_file de)
+DE_API int de_close(de_file de)
 {
     if (de == NULL)
         return DE_SUCCESS;
@@ -324,7 +343,7 @@ int de_close(de_file de)
     return DE_SUCCESS;
 }
 
-int de_truncate(de_file de)
+DE_API int de_truncate(de_file de)
 {
     if (de == NULL)
         return error(DE_NULL);

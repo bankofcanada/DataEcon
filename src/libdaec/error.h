@@ -5,21 +5,23 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "config.h"
+
 /* ========================================================================= */
 /* API */
 
 /* Return the result code of the most recent error. If msg != NULL, fill msg with
 the corresponding error message and clear the error. */
-int de_error(char *restrict msg, size_t len);
+DE_API int de_error(char *restrict msg, size_t len);
 
 /* same, but message contains information about the source of the error. */
-int de_error_source(char *restrict msg, size_t len);
+DE_API int de_error_source(char *restrict msg, size_t len);
 
 /* reset error tracking */
-int de_clear_error(void);
+DE_API int de_clear_error(void);
 
 /* positive error codes come from sqlite: https://sqlite.org/rescode.html */
-enum
+typedef enum
 {
     DE_SUCCESS = 0,       /* no error */
     DE_ERR_ALLOC = -1000, /* memory allocation error */
@@ -45,7 +47,7 @@ enum
     DE_INEXACT,           /* inexact date conversion, e.g. Saturday or Sunday specified as business daily date */
     DE_RANGE,             /* value out of range */
     DE_INTERNAL,          /* internal error */
-};
+} status_t;
 
 /* ========================================================================= */
 /* internal */

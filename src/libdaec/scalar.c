@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "object.h"
@@ -17,7 +18,7 @@ bool check_scalar_type(type_t type)
 }
 
 /* create a new scalar object in a given parent catalog */
-int de_store_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
+DE_API int de_store_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
                   frequency_t freq, int64_t nbytes, const void *value,
                   obj_id_t *id)
 {
@@ -26,14 +27,14 @@ int de_store_scalar(de_file de, obj_id_t pid, const char *name, type_t type,
     if (!check_scalar_type(type))
         return error(DE_BAD_TYPE);
     obj_id_t _id;
-    TRACE_RUN(_new_object(de, pid, class_scalar, type, name, &_id));
+    TRACE_RUN(new_object(de, pid, class_scalar, type, name, &_id));
     if (id != NULL)
         *id = _id;
     TRACE_RUN(sql_store_scalar_value(de, _id, freq, nbytes, value));
     return DE_SUCCESS;
 }
 
-int de_load_scalar(de_file de, obj_id_t id, scalar_t *scalar)
+DE_API int de_load_scalar(de_file de, obj_id_t id, scalar_t *scalar)
 {
     if (de == NULL || scalar == NULL)
         return error(DE_NULL);

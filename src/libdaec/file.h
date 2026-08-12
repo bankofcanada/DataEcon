@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include <sqlite3.h>
+#include "config.h"
 
 /* ========================================================================= */
 /* API */
@@ -13,19 +14,19 @@ typedef struct de_file_s de_file_t;
 typedef de_file_t *de_file;
 
 /* open daec file in read-write mode (if write-protected it might either get opened in read-only mode or fail)*/
-int de_open(const char *fname, de_file *de);
+DE_API int de_open(const char *fname, de_file *de);
 
 /* open daec file in read-only mode */
-int de_open_readonly(const char *fname, de_file *de);
+DE_API int de_open_readonly(const char *fname, de_file *de);
 
 /* open a daec database in memory */
-int de_open_memory(de_file *pde);
+DE_API int de_open_memory(de_file *pde);
 
 /* close a previously opened daec file */
-int de_close(de_file de);
+DE_API int de_close(de_file de);
 
 /* delete everything in the given daec file */
-int de_truncate(de_file de);
+DE_API int de_truncate(de_file de);
 
 /* ========================================================================= */
 /* internal */
@@ -49,7 +50,10 @@ typedef enum stmt_name
     stmt_load_tseries,
     stmt_load_mvtseries,
     stmt_load_ndtseries,
+    stmt_load_ndtseries_value,
+    stmt_load_ndtseries_eltype_elfreq,
     stmt_load_ndaxes,
+    stmt_load_ndaxes_ids,
     stmt_load_axis,
     stmt_delete_object,
     stmt_set_attribute,
@@ -68,14 +72,8 @@ struct de_file_s
     bool transaction;
 };
 
-/* called when creating a new de_file. creates tables and indexes */
-int _init_file(de_file de);
-
-/* return a static buffer containing the SQL text for the given stmt_name */
-const char *_get_statement_sql(stmt_name_t stmt_name);
-
 /* return a prepared statement by the given name */
-sqlite3_stmt *_get_statement(de_file de, stmt_name_t stmt_name);
+sqlite3_stmt *sql_statement(de_file de, stmt_name_t stmt_name);
 
 /* functions that start and post transactions */
 int de_commit(de_file de);

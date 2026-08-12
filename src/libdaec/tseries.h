@@ -1,6 +1,7 @@
 #ifndef __TSERIES_H__
 #define __TSERIES_H__
 
+#include "config.h"
 #include "file.h"
 #include "object.h"
 #include "axis.h"
@@ -22,15 +23,13 @@ typedef struct
 typedef tseries_t vector_t;
 
 /* create a new 1d-array object in a given parent catalog */
-int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
-                     type_t eltype, frequency_t elfreq,
-                     axis_id_t axis_id, int64_t nbytes, const void *value,
-                     obj_id_t *id);
+DE_API int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t type,
+                         type_t eltype, frequency_t elfreq,
+                         axis_id_t axis_id, int64_t nbytes, const void *value,
+                         obj_id_t *id);
 
 /* load a 1d-array object by name from a given parent catalog */
-int de_load_tseries(de_file de, obj_id_t id, tseries_t *tseries);
-
-/* ========================================================================= */
+DE_API int de_load_tseries(de_file de, obj_id_t id, tseries_t *tseries);/* ========================================================================= */
 /* internal */
 
 bool check_tseries_type(type_t type);

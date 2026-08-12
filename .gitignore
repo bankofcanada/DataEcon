@@ -9,7 +9,6 @@
 
 # Linker output
 *.ilk
-*.map
 *.exp
 
 # Precompiled Headers
@@ -41,6 +40,9 @@
 *.su
 *.idb
 *.pdb
+
+# Temporary files
+*.asv
 
 bin/
 .cache/

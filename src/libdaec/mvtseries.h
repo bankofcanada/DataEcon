@@ -1,6 +1,7 @@
 #ifndef __MVTSERIES_H__
 #define __MVTSERIES_H__
 
+#include "config.h"
 #include "file.h"
 #include "object.h"
 #include "axis.h"
@@ -23,16 +24,14 @@ typedef struct
 typedef mvtseries_t matrix_t;
 
 /* create a new 2d-array object in a given parent catalog */
-int de_store_mvtseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
-                       type_t eltype, frequency_t elfreq,
-                       axis_id_t axis1_id, axis_id_t axis2_id,
-                       int64_t nbytes, const void *value,
-                       obj_id_t *id);
+DE_API int de_store_mvtseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
+                           type_t eltype, frequency_t elfreq,
+                           axis_id_t axis1_id, axis_id_t axis2_id,
+                           int64_t nbytes, const void *value,
+                           obj_id_t *id);
 
 /* load a 2d-array object by name from a given parent catalog */
-int de_load_mvtseries(de_file de, obj_id_t id, mvtseries_t *mvtseries);
-
-/* ========================================================================= */
+DE_API int de_load_mvtseries(de_file de, obj_id_t id, mvtseries_t *mvtseries);/* ========================================================================= */
 /* internal */
 
 bool check_mvtseries_type(type_t type);

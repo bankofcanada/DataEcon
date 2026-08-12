@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "config.h"
 #include "file.h"
 #include "object.h"
 
@@ -33,12 +34,12 @@ typedef struct
 } axis_t;
 
 /* create or find an axis of the given type */
-int de_axis_plain(de_file de, int64_t length, axis_id_t *id);
-int de_axis_range(de_file de, int64_t length, frequency_t frequency, int64_t first, axis_id_t *id);
-int de_axis_names(de_file de, int64_t length, const char *names, axis_id_t *id);
+DE_API int de_axis_plain(de_file de, int64_t length, axis_id_t *id);
+DE_API int de_axis_range(de_file de, int64_t length, frequency_t frequency, int64_t first, axis_id_t *id);
+DE_API int de_axis_names(de_file de, int64_t length, const char *names, axis_id_t *id);
 
 /* load an axis from its id */
-int de_load_axis(de_file de, axis_id_t id, axis_t *axis);
+DE_API int de_load_axis(de_file de, axis_id_t id, axis_t *axis);
 
 /* ========================================================================= */
 /* internal */

@@ -14,7 +14,7 @@
 /* ========================================================================= */
 /* internal */
 
-void _fill_object(sqlite3_stmt *stmt, object_t *object);
+void sql_fill_object(sqlite3_stmt *stmt, object_t *object);
 
 /* find the id of an object identified by its parent and its name */
 int sql_find_object(de_file de, obj_id_t pid, const char *name, obj_id_t *id);
@@ -83,5 +83,15 @@ int sql_store_ndaxes(de_file de, obj_id_t id, int64_t axis_index, axis_id_t axis
 
 /* load a row from the ndtseries table with the given id */
 int sql_load_ndtseries_value(de_file de, obj_id_t id, ndtseries_t *ndmvtseries);
+
+/* load an array of the axis ids of the ndtseries table with the given id */
+int sql_load_ndaxes_ids(de_file de, obj_id_t obj_id, axis_id_t *axes_ids);
+
+/* load an the value field of the ndtseries table with the given id */
+int sql_load_ndtseries_value_field(de_file de, obj_id_t id, const void **value);
+
+/* load an the eltype and elfreq fields of the ndtseries table with the given id */
+int sql_load_ndtseries_eltype_elfreq(de_file de, obj_id_t id, type_t *eltype, frequency_t *elfreq);
+
 
 #endif

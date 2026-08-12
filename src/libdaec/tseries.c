@@ -1,4 +1,5 @@
 
+#include "config.h"
 #include "error.h"
 #include "file.h"
 #include "object.h"
@@ -23,7 +24,7 @@ int validate_eltype(type_t obj_type, type_t eltype, frequency_t elfreq)
 }
 
 /* create a new 1d-array object in a given parent catalog */
-int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
+DE_API int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t obj_type,
                      type_t eltype, frequency_t elfreq, 
                      axis_id_t axis_id, int64_t nbytes, const void *value,
                      obj_id_t *id)
@@ -34,7 +35,7 @@ int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t obj_type
         return error(DE_BAD_TYPE);
     TRACE_RUN(validate_eltype(obj_type, eltype, elfreq));
     obj_id_t _id;
-    TRACE_RUN(_new_object(de, pid, class_tseries, obj_type, name, &_id));
+    TRACE_RUN(new_object(de, pid, class_tseries, obj_type, name, &_id));
     if (id != NULL)
         *id = _id;
     TRACE_RUN(sql_store_tseries_value(de, _id, eltype, elfreq, axis_id, nbytes, value));
@@ -42,7 +43,7 @@ int de_store_tseries(de_file de, obj_id_t pid, const char *name, type_t obj_type
 }
 
 /* load a 1d-array object by name from a given parent catalog */
-int de_load_tseries(de_file de, obj_id_t id, tseries_t *tseries)
+DE_API int de_load_tseries(de_file de, obj_id_t id, tseries_t *tseries)
 {
     if (de == NULL || tseries == NULL)
         return error(DE_NULL);

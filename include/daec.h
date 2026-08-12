@@ -22,6 +22,9 @@ extern "C"
     /* return the library version as a static string in "x.y.z" format */
     const char *de_version(void);
 
+    /* returns the current setting for DE_MAX_AXES*/
+    const int de_max_axes(void);
+
     /* ***************************** error *************************************** */
 
     /* Return the result code of the most recent error. If msg != NULL, fill msg with
@@ -35,7 +38,7 @@ extern "C"
     int de_clear_error(void);
 
     /* positive error codes come from sqlite: https://sqlite.org/rescode.html */
-    enum
+    typedef enum
     {
         DE_SUCCESS = 0,       /* no error */
         DE_ERR_ALLOC = -1000, /* memory allocation error */
@@ -61,7 +64,7 @@ extern "C"
         DE_INEXACT,           /* inexact date conversion, e.g. Saturday or Sunday specified as business daily date */
         DE_RANGE,             /* value out of range */
         DE_INTERNAL,          /* internal error */
-    };
+    } status_t;
 
     /* ***************************** file **************************************** */
 
@@ -367,6 +370,12 @@ extern "C"
     /* load a Nd-array object by name from a given parent catalog */
     int de_load_ndtseries(de_file de, obj_id_t id, ndtseries_t *ndtseries);
 
+    int de_load_ndtseries_axis_ids(de_file de, obj_id_t id, axis_id_t *axis_ids);
+
+    int de_load_ndtseries_value(de_file de, obj_id_t id, const void **value);
+
+    int de_load_ndtseries_eltype_elfreq(de_file de, obj_id_t id, type_t *eltype, frequency_t *elfreq);
+
     /* ***************************** misc **************************************** */
 
     /*
@@ -423,6 +432,26 @@ extern "C"
 
     /* Release resources allocated for the given search. */
     int de_finalize_search(de_search search);
+
+    /* ******************** matlab pointer extractors **************************** */
+
+    double get_double_from_voidptr(const void* p);
+    int64_t get_int64_from_voidptr(const void* p);
+    uint64_t get_uint64_from_voidptr(const void* p);
+    const char* get_string_from_voidptr(const void* p);
+    double get_complex_real_from_voidptr(const void* p);
+    double get_complex_imag_from_voidptr(const void* p);
+    /* Array/Vector access functions with byte offset */
+    double get_double_from_voidptr_offset(const void* p, size_t byte_offset);
+    int64_t get_int64_from_voidptr_offset(const void* p, size_t byte_offset);
+    uint64_t get_uint64_from_voidptr_offset(const void* p, size_t byte_offset);
+    /* Vectorized array extraction functions for performance optimization */
+    /* Copy array of values from void pointer to pre-allocated output array */
+    void get_double_array_from_voidptr(const void* p, size_t length, double* output);
+    void get_int64_array_from_voidptr(const void* p, size_t length, int64_t* output);
+    void get_uint64_array_from_voidptr(const void* p, size_t length, uint64_t* output);
+    int32_t get_int32_from_voidptr(const void* p);
+    signed char get_char_from_voidptr(const void* p);
 
 #ifdef __cplusplus
 }

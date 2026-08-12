@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void print_error_message() {
+    static char error_message[4096];
+    de_error_source(error_message, sizeof error_message - 1);
+    printf("Error: %s\n", error_message);
+}
+
 int main(void)
 {
     de_file de;
@@ -12,6 +18,7 @@ int main(void)
     if (rc != DE_SUCCESS)
     {
         fprintf(stderr, "Failed to open the file.\n");
+        print_error_message();
         return EXIT_FAILURE;
     }
 
@@ -21,6 +28,7 @@ int main(void)
     if (rc != DE_SUCCESS)
     {
         fprintf(stderr, "Failed to write the message\n");
+        print_error_message();
         de_close(de);
         return EXIT_FAILURE;
     }
@@ -30,6 +38,7 @@ int main(void)
     if (rc != DE_SUCCESS)
     {
         fprintf(stderr, "Failed to find the message.\n");
+        print_error_message();
         de_close(de);
         return EXIT_FAILURE;
     }
@@ -39,6 +48,7 @@ int main(void)
     if (rc != DE_SUCCESS)
     {
         fprintf(stderr, "Failed to read the message.\n");
+        print_error_message();
         de_close(de);
         return EXIT_FAILURE;
     }
